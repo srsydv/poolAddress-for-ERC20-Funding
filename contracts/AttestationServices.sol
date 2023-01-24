@@ -8,10 +8,10 @@ import "./interfaces/IAttestationRegistry.sol";
 
 contract AttestationServices {
     // The AS global registry.
-    IAttestationServices private immutable _asRegistry;
+    IAttestationRegistry private immutable _asRegistry;
     address AttestationRegistryAddress;
 
-    constructor(IAttestationServices registry) {
+    constructor(IAttestationRegistry registry) {
         if (address(registry) == address(0x0)) {
             revert("InvalidRegistry");
         }
@@ -62,7 +62,7 @@ contract AttestationServices {
         bytes32 indexed schema
     );
 
-    function getASRegistry() external view returns (IAttestationServices) {
+    function getASRegistry() external view returns (IAttestationRegistry) {
         return _asRegistry;
     }
 
@@ -71,8 +71,7 @@ contract AttestationServices {
         bytes32 schema,
         uint256 expirationTime,
         bytes32 refUUID,
-        bytes calldata data,
-        address AttestationRegistryAddress
+        bytes calldata data
     ) public payable virtual returns (bytes32) {
         return
             _attest(
@@ -81,8 +80,7 @@ contract AttestationServices {
                 expirationTime,
                 refUUID,
                 data,
-                msg.sender,
-                AttestationRegistryAddress
+                msg.sender
             );
     }
 
@@ -92,16 +90,15 @@ contract AttestationServices {
         uint256 expirationTime,
         bytes32 refUUID,
         bytes calldata data,
-        address attester,
-        address AttestationRegistryAddress
+        address attester
     ) private returns (bytes32) {
         if (expirationTime <= block.timestamp) {
             revert("InvalidExpirationTime");
         }
 
-        IAttestationRegistry.ASRecord memory asRecord = IAttestationRegistry(
-            AttestationRegistryAddress
-        ).getAS(schema);
+        IAttestationRegistry.ASRecord memory asRecord = _asRegistry.getAS(
+            schema
+        );
         if (asRecord.uuid == EMPTY_UUID) {
             revert("InvalidSchema");
         }
@@ -147,6 +144,17 @@ contract AttestationServices {
                 )
             );
     }
+
+    function isAddressActive(bytes32 uuid) public view returns (bool) {
+        return
+            isAddressValid(uuid) &&
+            _db[uuid].expirationTime >= block.timestamp &&
+            _db[uuid].revocationTime == 0;
+    }
+
+    function isAddressValid(bytes32 uuid) public view returns (bool) {
+        return _db[uuid].uuid != 0;
+    }
 }
 
-// 0xd815C904081618E2dC46543204fe0D8994A5C0Bd
+// 0xF51F22dae0621C7753497b60c455162992eaE745
