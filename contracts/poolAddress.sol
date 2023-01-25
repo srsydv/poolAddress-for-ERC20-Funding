@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./poolRegistry.sol";
 import "./poolStorage.sol";
+import "./Libraries/LibCalculations.sol";
 
 contract poolAddress is poolStorage {
     address poolRegistryAddress;
@@ -33,13 +34,18 @@ contract poolAddress is poolStorage {
         createdAt = block.timestamp;
     }
 
+    event SubmittedLoan(
+        uint256 indexed bidId,
+        address indexed borrower,
+        address receiver
+    );
+
     function loanRequest(
         address _lendingToken,
         uint256 _poolId,
         uint256 _principal,
         uint32 _duration,
         uint16 _APR,
-        string calldata _metadataURI,
         address _receiver
     ) public returns (uint256 loanId_) {
         (bool isVerified, ) = poolRegistry(poolRegistryAddress)
@@ -47,16 +53,16 @@ contract poolAddress is poolStorage {
         require(isVerified, "Not verified borrower");
         require(
             !poolRegistry(poolRegistryAddress).ClosedPool(_poolId),
-            "Market is closed"
+            "Pool is closed"
         );
 
         loanId_ = loanId;
 
-        // Create and store our bid into the mapping
+        // Create and store our loan into the mapping
         Loan storage loan = loans[loanId];
         loan.borrower = msg.sender;
         loan.receiver = _receiver != address(0) ? _receiver : loan.borrower;
-        loan.marketplaceId = _poolId;
+        loan.poolId = _poolId;
         loan.loanDetails.lendingToken = ERC20(_lendingToken);
         loan.loanDetails.principal = _principal;
         loan.loanDetails.loanDuration = _duration;
@@ -67,12 +73,26 @@ contract poolAddress is poolStorage {
 
         loan.terms.APR = _APR;
 
-        bidDefaultDuration[loanId] = poolRegistry(poolRegistryAddress)
+        loanDefaultDuration[loanId] = poolRegistry(poolRegistryAddress)
             .getPaymentDefaultDuration(_poolId);
 
-        bidExpirationTime[loanId] = poolRegistry(poolRegistryAddress)
+        loanExpirationTime[loanId] = poolRegistry(poolRegistryAddress)
             .getBidExpirationTime(_poolId);
+
+        loan.terms.paymentCycleAmount = LibCalculations.payment(
+            _principal,
+            _duration,
+            loan.terms.paymentCycle,
+            _APR
+        );
+        loan.state = LoanState.PENDING;
+
+        emit SubmittedLoan(loanId, loan.borrower, loan.receiver);
+
+        // Store bid inside borrower loans mapping
+        borrowerLoans[loan.borrower].push(loanId);
+
+        // Increment loan id counter
+        loanId++;
     }
 }
-
-library Calculations {}

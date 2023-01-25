@@ -58,4 +58,4 @@ contract AttestationRegistry is IAttestationRegistry {
     }
 }
 
-// ASR = 0x88e3d11Eab4E8271791B8f7C81F9B0E6d672B307
+// 1 = 0x905Ea6c3F2a570477C028a201c037c3ba24D0cd6

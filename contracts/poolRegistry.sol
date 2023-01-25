@@ -7,13 +7,13 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 // import "./utils/LibShare.sol";
 import "./Libraries/LibPool.sol";
 import "./AttestationServices.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-// 0x60C97d26482d2DC8f8935C1bE5572346b33316cb
-// poolAddress": "0x0195c71C66bf6Db9357D6F2dBaD8E3EF33655ccd"
+// import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+// 0x6515629B35208A10F3ea1142a005DF14e37FDfe5
+// poolAddress": "0x9F89ACA814775181f7468a28ae63eEf36aE0fCD7"
 // Libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract poolRegistry is Initializable {
+contract poolRegistry {
     using Counters for Counters.Counter;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -27,10 +27,7 @@ contract poolRegistry is Initializable {
     bytes32 public borrowerAttestationSchemaId;
     bytes32 private _attestingSchemaId;
 
-    function initialize(AttestationServices _attestationServices)
-        external
-        initializer
-    {
+    function initialize(AttestationServices _attestationServices) external {
         attestationService = _attestationServices;
 
         lenderAttestationSchemaId = _attestationServices

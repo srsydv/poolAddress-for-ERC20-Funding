@@ -7,7 +7,7 @@ abstract contract poolStorage {
     // Current number of bids.
     uint256 public loanId = 0;
 
-    // Mapping of bidId to bid information.
+    // Mapping of loanId to loan information.
     mapping(uint256 => Loan) public loans;
 
     enum LoanState {
@@ -54,7 +54,7 @@ abstract contract poolStorage {
      * @param borrower Account address who is requesting a loan.
      * @param receiver Account address who will receive the loan amount.
      * @param lender Account address who accepted and funded the loan request.
-     * @param marketplaceId ID of the marketplace the bid was submitted to.
+     * @param poolId ID of the pool the bid was submitted to.
      * @param metadataURI ID of off chain metadata to find additional information of the loan request.
      * @param loanDetails Struct of the specific loan details.
      * @param terms Struct of the loan request terms.
@@ -77,13 +77,15 @@ abstract contract poolStorage {
         address borrower;
         address receiver;
         address lender;
-        uint256 marketplaceId;
+        uint256 poolId;
         bytes32 _metadataURI; // DEPRECATED
         LoanDetails loanDetails;
         Terms terms;
         LoanState state;
     }
 
-    mapping(uint256 => uint32) public bidDefaultDuration;
-    mapping(uint256 => uint32) public bidExpirationTime;
+    // Mapping of borrowers to borrower requests.
+    mapping(address => uint256[]) public borrowerLoans;
+    mapping(uint256 => uint32) public loanDefaultDuration;
+    mapping(uint256 => uint32) public loanExpirationTime;
 }
