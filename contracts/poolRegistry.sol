@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Libraries/LibPool.sol";
 import "./AttestationServices.sol";
 // import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-// 0x6515629B35208A10F3ea1142a005DF14e37FDfe5
-// poolAddress": "0x9F89ACA814775181f7468a28ae63eEf36aE0fCD7"
+// 0x7C2BaCF6e40Dd0A7939e29127708f23d93097e44
+// poolAddress": "0x91B43F6c5017A3AdAfB13c672F79c5079acD8Cec"
 // Libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -87,7 +87,7 @@ contract poolRegistry {
     event BorrowerAttestation(uint256 poolId, address borrower);
 
     //Create Pool
-    function createMarket(
+    function createPool(
         address _initialOwner,
         uint32 _paymentCycleDuration,
         uint32 _paymentDefaultDuration,
@@ -97,7 +97,7 @@ contract poolRegistry {
         bool _requireBorrowerAttestation,
         string calldata _uri
     ) external {
-        _createMarket(
+        _createPool(
             _initialOwner,
             _paymentCycleDuration,
             _paymentDefaultDuration,
@@ -110,7 +110,7 @@ contract poolRegistry {
     }
 
     // Creates a new Pool.
-    function _createMarket(
+    function _createPool(
         address _initialOwner,
         uint32 _paymentCycleDuration,
         uint32 _paymentDefaultDuration,
@@ -240,9 +240,9 @@ contract poolRegistry {
             _isLender ? lenderAttestationSchemaId : borrowerAttestationSchemaId
         )
     {
-        require(msg.sender == pools[_poolId].owner, "Not the market owner");
+        require(msg.sender == pools[_poolId].owner, "Not the pool owner");
 
-        // Submit attestation for borrower to join a market
+        // Submit attestation for borrower to join a pool
         bytes32 uuid = attestationService.attest(
             _Address,
             _attestingSchemaId, // set by the modifier
@@ -261,9 +261,9 @@ contract poolRegistry {
         bool _isLender
     ) internal {
         if (_isLender) {
-            // Store the lender attestation ID for the market ID
+            // Store the lender attestation ID for the pool ID
             pools[_poolId].lenderAttestationIds[_Address] = _uuid;
-            // Add lender address to market set
+            // Add lender address to pool set
             pools[_poolId].verifiedLendersForPool.add(_Address);
 
             emit LenderAttestation(_poolId, _Address);

@@ -58,4 +58,4 @@ contract AttestationRegistry is IAttestationRegistry {
     }
 }
 
-// 1 = 0x905Ea6c3F2a570477C028a201c037c3ba24D0cd6
+// 1 = 0xBC57EaafD5384f2910dc10ae99EB65895187A528

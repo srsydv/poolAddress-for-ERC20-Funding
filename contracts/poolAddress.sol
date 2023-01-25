@@ -13,7 +13,6 @@ contract poolAddress is poolStorage {
     address public poolOwner;
     uint256 public paymentCycleDuration;
     uint256 public paymentDefaultDuration;
-    // uint256 public bidExpirationTime;
     uint256 public feePercent;
     uint256 public createdAt;
 
@@ -35,9 +34,10 @@ contract poolAddress is poolStorage {
     }
 
     event SubmittedLoan(
-        uint256 indexed bidId,
+        uint256 indexed loanId,
         address indexed borrower,
-        address receiver
+        address receiver,
+        uint256 paymentCycleAmount
     );
 
     function loanRequest(
@@ -85,9 +85,15 @@ contract poolAddress is poolStorage {
             loan.terms.paymentCycle,
             _APR
         );
+
         loan.state = LoanState.PENDING;
 
-        emit SubmittedLoan(loanId, loan.borrower, loan.receiver);
+        emit SubmittedLoan(
+            loanId,
+            loan.borrower,
+            loan.receiver,
+            loan.terms.paymentCycleAmount
+        );
 
         // Store bid inside borrower loans mapping
         borrowerLoans[loan.borrower].push(loanId);
