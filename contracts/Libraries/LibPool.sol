@@ -7,6 +7,7 @@ library LibPool {
     function deployPoolAddress(
         address _poolOwner,
         address _poolRegistry,
+        address _AconomyFeeAddress,
         uint256 _paymentCycleDuration,
         uint256 _paymentDefaultDuration,
         uint256 _feePercent
@@ -14,6 +15,7 @@ library LibPool {
         poolAddress tokenAddress = new poolAddress(
             _poolOwner,
             _poolRegistry,
+            _AconomyFeeAddress,
             _paymentCycleDuration,
             _paymentDefaultDuration,
             _feePercent

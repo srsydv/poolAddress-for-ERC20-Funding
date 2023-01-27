@@ -48,12 +48,11 @@ contract AttestationServices {
     mapping(bytes32 => Attestation) private _db;
 
     /**
-     * @dev Triggered when an attestation has been made.
-     *
-     * @param recipient The recipient of the attestation.
-     * @param attester The attesting account.
-     * @param uuid The UUID the revoked attestation.
-     * @param schema The UUID of the AS.
+     *  Triggered when an attestation has been made.
+     ~recipient The recipient of the attestation.
+     ~attester The attesting account.
+     ~uuid The UUID the revoked attestation.
+     ~schema The UUID of the AS.
      */
     event Attested(
         address indexed recipient,
@@ -157,4 +156,5 @@ contract AttestationServices {
     }
 }
 
-// 2= 0x716620506469fdBb728877E89A2a632fD44D2F9a
+// 2= 0x64AC4bFDcB0304928be139710F653042AdF4534e
+// 0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B

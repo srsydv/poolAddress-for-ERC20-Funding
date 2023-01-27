@@ -1,17 +1,11 @@
 // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.0;
-
-// import "@openzeppelin/contracts/utils/math/SafeCast.sol";
-// import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
- * @title WadRayMath library
- * @author Multiplier Finance
- * @dev Provides mul and div function for wads (decimal numbers with 18 digits precision) and rays (decimals with 27 digits)
+ Provides mul and div function for wads (decimal numbers with 18 digits precision) and rays (decimals with 27 digits)
  */
 library WadRayMath {
     using SafeMath for uint256;

@@ -1,36 +1,54 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-// import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-// import "@openzeppelin/contracts/utils/math/SafeCast.sol";
-// import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./WadRayMath.sol";
 
 library LibCalculations {
-// contract LibCalculations {
+    // contract LibCalculations {
     using WadRayMath for uint256;
 
-    /**
-     * @title WadRayMath library
-     * @dev Provides mul and div function for wads (decimal numbers with 18 digits precision) and rays (decimals with 27 digits)
-     */
+    uint256 internal constant WAD = 1e18;
+
+    function percentFactor(uint256 decimals) internal pure returns (uint256) {
+        return 100 * (10**decimals);
+    }
 
     /**
-     * @notice Calculates the payment amount for a cycle duration.
-     *  The formula is calculated based on the standard Estimated Monthly Installment (https://en.wikipedia.org/wiki/Equated_monthly_installment)
-     *  EMI = [P x R x (1+R)^N]/[(1+R)^N-1]
-     * @param principal The starting amount that is owed on the loan.
-     * @param loanDuration The length of the loan.
-     * @param cycleDuration The length of the loan's payment cycle.
-     * @param apr The annual percentage rate of the loan.
+     * Returns a percentage value of a number.
+     self The number to get a percentage of.
+     percentage The percentage value to calculate with 2 decimal places (10000 = 100%).
      */
+    function percent(uint256 self, uint16 percentage)
+        public
+        pure
+        returns (uint256)
+    {
+        return percent(self, percentage, 2);
+    }
+
+    /**
+     * Returns a percentage value of a number.
+     self The number to get a percentage of.
+     percentage The percentage value to calculate with.
+     decimals The number of decimals the percentage value is in.
+     */
+    function percent(
+        uint256 self,
+        uint256 percentage,
+        uint256 decimals
+    ) internal pure returns (uint256) {
+        return (self * percentage) / percentFactor(decimals);
+    }
 
     function payment(
         uint256 principal,
         uint32 loanDuration,
         uint32 cycleDuration,
         uint16 apr
-    ) public view returns (uint256) {
+    ) public pure returns (uint256) {
         uint256 n = loanDuration / cycleDuration;
         if (apr == 0) return (principal / n);
 

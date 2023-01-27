@@ -6,8 +6,6 @@ import "./interfaces/IAttestationServices.sol";
 import "./interfaces/IAttestationRegistry.sol";
 
 contract AttestationRegistry is IAttestationRegistry {
-    // The global mapping between AS records and their IDs.
-    // mapping(bytes32 => ASRecord) private _registry;
     mapping(bytes32 => ASRecord) public _registry;
     event Registered(
         bytes32 indexed uuid,
@@ -58,4 +56,5 @@ contract AttestationRegistry is IAttestationRegistry {
     }
 }
 
-// 1 = 0xBC57EaafD5384f2910dc10ae99EB65895187A528
+// 1 = 0xbd590158631F4B5f38B5FbC2336DBe94A2787B9c
+// 0xf8e81D47203A594245E36C48e151709F0C19fBe8
