@@ -6,9 +6,9 @@ import "./AconomyFee.sol";
 import "./Libraries/LibPool.sol";
 import "./AttestationServices.sol";
 // 0xE798Ae7D315A56Cd695f74614292866324431F51   0xcD6a42782d230D7c13A74ddec5dD140e55499Df9
-// poolAddress": "0x3Dc21D5a4a63A46e7FBE2A6b49eaf085Ca3D5582" 0x568864A892a1B25127018Be020d2AF585Dff6c96
-// AS=0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B
-// AF=0xd9145CCE52D386f254917e481eB44e9943F39138
+// poolAddress": "0x3Dc21D5a4a63A46e7FBE2A6b49eaf085Ca3D5582" 0x633dBFB62C1Bd3d5fFf4D7d94E8c2f6f5B479ca1
+// AS=0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d
+// AF=0x358AA13c52544ECCEF6B0ADD0f801012ADAD5eE3
 // a1=0x5B38Da6a701c568545dCfcB03FcB875f56beddC4
 // a2=0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -23,6 +23,7 @@ contract poolRegistry {
     }
 
     address AconomyFeeAddress;
+    address accountStatusAddress;
     AttestationServices public attestationService;
     bytes32 public lenderAttestationSchemaId;
     bytes32 public borrowerAttestationSchemaId;
@@ -30,10 +31,12 @@ contract poolRegistry {
 
     constructor(
         AttestationServices _attestationServices,
-        address _AconomyFeeAddress
+        address _AconomyFeeAddress,
+        address _accountStatus
     ) {
         attestationService = _attestationServices;
         AconomyFeeAddress = _AconomyFeeAddress;
+        accountStatusAddress = _accountStatus;
 
         lenderAttestationSchemaId = _attestationServices
             .getASRegistry()
@@ -73,7 +76,9 @@ contract poolRegistry {
         mapping(address => bytes32) borrowerAttestationIds;
     }
 
+    //poolId => poolDetail
     mapping(uint256 => poolDetail) internal pools;
+    //poolId => close or open
     mapping(uint256 => bool) private ClosedPools;
 
     uint256 public poolCount;
@@ -133,6 +138,7 @@ contract poolRegistry {
             msg.sender,
             address(this),
             AconomyFeeAddress,
+            accountStatusAddress,
             _paymentCycleDuration,
             _paymentDefaultDuration,
             _feePercent
@@ -358,6 +364,10 @@ contract poolRegistry {
         returns (uint32)
     {
         return pools[poolId].loanExpirationTime;
+    }
+
+    function getPoolAddress(uint256 _poolId) public view returns (address) {
+        return pools[_poolId].poolAddress;
     }
 
     function getPoolOwner(uint256 _poolId) public view returns (address) {

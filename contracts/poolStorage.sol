@@ -80,7 +80,6 @@ abstract contract poolStorage {
         address receiver;
         address lender;
         uint256 poolId;
-        bytes32 _metadataURI; // DEPRECATED
         LoanDetails loanDetails;
         Terms terms;
         LoanState state;

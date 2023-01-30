@@ -8,6 +8,7 @@ library LibPool {
         address _poolOwner,
         address _poolRegistry,
         address _AconomyFeeAddress,
+        address _accountStatusAddress,
         uint256 _paymentCycleDuration,
         uint256 _paymentDefaultDuration,
         uint256 _feePercent
@@ -16,6 +17,7 @@ library LibPool {
             _poolOwner,
             _poolRegistry,
             _AconomyFeeAddress,
+            _accountStatusAddress,
             _paymentCycleDuration,
             _paymentDefaultDuration,
             _feePercent
