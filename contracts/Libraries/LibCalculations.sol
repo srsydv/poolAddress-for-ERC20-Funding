@@ -5,6 +5,7 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./WadRayMath.sol";
+import "../poolAddress.sol";
 
 library LibCalculations {
     // contract LibCalculations {
@@ -61,5 +62,80 @@ library LibCalculations {
         uint256 denominator = exp - one;
 
         return numerator.wadDiv(denominator);
+    }
+
+    function lastRepaidTimestamp(poolAddress.Loan storage _loan)
+        internal
+        view
+        returns (uint32)
+    {
+        return
+            _loan.loanDetails.lastRepaidTimestamp == 0
+                ? _loan.loanDetails.acceptedTimestamp
+                : _loan.loanDetails.lastRepaidTimestamp;
+    }
+
+    function owedAmount(poolAddress.Loan storage _loan, uint256 _timestamp)
+        internal
+        view
+        returns (
+            uint256 owedPrincipal_,
+            uint256 duePrincipal_,
+            uint256 interest_
+        )
+    {
+        // Total Amount left to pay
+        return
+            calculateOwedAmount(
+                _loan.loanDetails.principal,
+                _loan.loanDetails.totalRepaid.principal,
+                _loan.terms.APR,
+                _loan.terms.paymentCycleAmount,
+                _loan.terms.paymentCycle,
+                lastRepaidTimestamp(_loan),
+                _timestamp,
+                _loan.loanDetails.acceptedTimestamp,
+                _loan.loanDetails.loanDuration
+            );
+    }
+
+    function calculateOwedAmount(
+        uint256 principal,
+        uint256 totalRepaidPrincipal,
+        uint16 _interestRate,
+        uint256 _paymentCycleAmount,
+        uint256 _paymentCycle,
+        uint256 _lastRepaidTimestamp,
+        uint256 _timestamp,
+        uint256 _startTimestamp,
+        uint256 _loanDuration
+    )
+        internal
+        pure
+        returns (
+            uint256 owedPrincipal_,
+            uint256 duePrincipal_,
+            uint256 interest_
+        )
+    {
+        owedPrincipal_ = principal - totalRepaidPrincipal;
+
+        uint256 interestInAYear = percent(owedPrincipal_, _interestRate);
+        uint256 owedTime = _timestamp - uint256(_lastRepaidTimestamp);
+        interest_ = (interestInAYear * owedTime) / 365 days;
+
+        // Cast to int265 to avoid underflow errors (negative means loan duration has passed)
+        int256 durationLeftOnLoan = int256(_loanDuration) -
+            (int256(_timestamp) - int256(_startTimestamp));
+        bool isLastPaymentCycle = durationLeftOnLoan < int256(_paymentCycle) || // Check if current payment cycle is within or beyond the last one
+            owedPrincipal_ + interest_ <= _paymentCycleAmount; // Check if what is left to pay is less than the payment cycle amount
+
+        // Max payable amount in a cycle
+        // NOTE: the last cycle could have less than the calculated payment amount
+        uint256 maxCycleOwed = isLastPaymentCycle ? owedPrincipal_ + interest_ : _paymentCycleAmount;
+
+        // Calculate accrued amount due since last repayment
+        uint256 Amount = (maxCycleOwed * owedTime) / _paymentCycle;
+        duePrincipal_ = Math.min(Amount - interest_, owedPrincipal_);
     }
 }
