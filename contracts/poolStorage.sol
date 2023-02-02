@@ -21,6 +21,16 @@ abstract contract poolStorage {
         uint32 maxDuration;
         uint16 interestRate;
         uint256 bidId;
+        BidState state;
+        uint32 bidTimestamp;
+        uint32 acceptBidTimestamp;
+    }
+
+    enum BidState {
+        PENDING,
+        CANCELLED,
+        ACCEPTED,
+        PAID
     }
 
     // Mapping of lender address => poolId => ERC20 token => FundDetail
@@ -28,12 +38,10 @@ abstract contract poolStorage {
         public lenderPoolFundDetails;
 
     enum LoanState {
-        NONEXISTENT,
         PENDING,
         CANCELLED,
         ACCEPTED,
-        PAID,
-        LIQUIDATED
+        PAID
     }
 
     /**

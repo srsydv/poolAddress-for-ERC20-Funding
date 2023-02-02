@@ -17,12 +17,23 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+// 0xe2899bddFD890e320e643044c6b95B9B0b84157A
+// poolAddress": "0xEC3c9230499a3FA960Ee28f7D2c0Ee3AD4AeBb07" 0xaabBF7b98Af6E1bcC801ceB3480a97C3d686757b
+// AS=0x3328358128832A260C76A4141e19E2A943CD4B6D
+
 // a1=0x5B38Da6a701c568545dCfcB03FcB875f56beddC4
 // a2=0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2
 // 1000000000
+// PR=0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47
+// poolAddress": "0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d" 0xD9eC9E840Bb5Df076DBbb488d01485058f421e58
+// AS=0xf8e81D47203A594245E36C48e151709F0C19fBe8
+// AF=0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8
+// AStts=0xd9145CCE52D386f254917e481eB44e9943F39138
+// a1=0x5B38Da6a701c568545dCfcB03FcB875f56beddC4
+// a2=0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2
+// 222222222222
 
 contract poolAddress is poolStorage {
-    using Counters for Counters.Counter;
     address poolRegistryAddress;
     address AconomyFeeAddress;
     address accountStatusAddress;
@@ -57,9 +68,17 @@ contract poolAddress is poolStorage {
 
     event loanAccepted(uint256 indexed loanId, address indexed lender);
 
+    event AcceptedBid(
+        address reciever,
+        uint256 BidId,
+        uint256 PoolId,
+        uint256 Amount
+    );
+
     event SupplyToPool(
         address indexed lender,
         uint256 indexed poolId,
+        uint256 BidId,
         address indexed ERC20Token,
         uint256 tokenAmount
     );
@@ -142,8 +161,6 @@ contract poolAddress is poolStorage {
             loan.terms.paymentCycleAmount
         );
 
-
-
         // Store loan inside borrower loans mapping
         borrowerLoans[loan.borrower].push(loanId);
 
@@ -171,7 +188,6 @@ contract poolAddress is poolStorage {
             "Pool is closed"
         );
         require(!isLoanExpired(_loanId), "Loan has expired");
-
 
         loan.loanDetails.acceptedTimestamp = uint32(block.timestamp);
         loan.loanDetails.lastRepaidTimestamp = uint32(block.timestamp);
@@ -388,6 +404,11 @@ contract poolAddress is poolStorage {
         uint16 _interestRate,
         uint32 _expiration
     ) external {
+        (bool isVerified, ) = poolRegistry(poolRegistryAddress)
+            .lenderVarification(_poolId, msg.sender);
+
+        require(isVerified, "Not verified lender");
+
         address lender = msg.sender;
         require(_expiration > uint32(block.timestamp), "wrong timestamp");
         uint256 _bidId = bidId;
@@ -399,6 +420,9 @@ contract poolAddress is poolStorage {
         fundDetail.maxDuration = _maxLoanDuration;
         fundDetail.interestRate = _interestRate;
         fundDetail.bidId = _bidId;
+        fundDetail.bidTimestamp = uint32(block.timestamp);
+
+        fundDetail.state = BidState.PENDING;
 
         address _poolAddress = poolRegistry(poolRegistryAddress).getPoolAddress(
             _poolId
@@ -408,6 +432,36 @@ contract poolAddress is poolStorage {
         // IERC20(_ERC20Address).transferFrom(lender, _poolAddress, _amount);
         bidId++;
 
-        emit SupplyToPool(lender, _poolId, _ERC20Address, _amount);
+        emit SupplyToPool(lender, _poolId, _bidId, _ERC20Address, _amount);
     }
+
+    function AcceptBid(
+        uint256 _poolId,
+        address _ERC20Address,
+        uint256 _bidId,
+        address _lender,
+        address _receiver
+    ) external onlyPoolOwner(_poolId) {
+        FundDetail storage fundDetail = lenderPoolFundDetails[_lender][_poolId][
+            _ERC20Address
+        ];
+        fundDetail.acceptBidTimestamp = uint32(block.timestamp);
+        uint256 amount = fundDetail.amount;
+        fundDetail.state = BidState.ACCEPTED;
+        address _poolAddress = poolRegistry(poolRegistryAddress).getPoolAddress(
+            _poolId
+        );
+        IERC20(_ERC20Address).approve(_receiver, amount);
+        IERC20(_ERC20Address).transferFrom(_poolAddress, _receiver, amount);
+
+        emit AcceptedBid(_receiver, _bidId, _poolId, amount);
+    }
+
+    function RepayInstallment(
+        uint256 _poolId,
+        address _ERC20Address,
+        uint256 _bidId,
+        address _lender,
+        address _receiver
+    ) external onlyPoolOwner(_poolId) {}
 }
