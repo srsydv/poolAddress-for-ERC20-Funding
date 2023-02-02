@@ -5,13 +5,14 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./AconomyFee.sol";
 import "./Libraries/LibPool.sol";
 import "./AttestationServices.sol";
-// 0xE798Ae7D315A56Cd695f74614292866324431F51   0xcD6a42782d230D7c13A74ddec5dD140e55499Df9
-// poolAddress": "0x3Dc21D5a4a63A46e7FBE2A6b49eaf085Ca3D5582" 0x6F54c9C0ea3785192deE6E93EC7540bd09001D51
-// AS=0x7EF2e0048f5bAeDe046f6BF797943daF4ED8CB47
-// AF=0xd9145CCE52D386f254917e481eB44e9943F39138
-// AStts=0xf8e81D47203A594245E36C48e151709F0C19fBe8
+// 0x406AB5033423Dcb6391Ac9eEEad73294FA82Cfbc   0xDA0bab807633f07f013f94DD0E6A4F96F8742B53
+// poolAddress": "0xEC3c9230499a3FA960Ee28f7D2c0Ee3AD4AeBb07" 0xc1F3Af1a7Aa87B338d19e56CDc8aF0BFC02d05D0
+// AS=0x1c91347f2A44538ce62453BEBd9Aa907C662b4bD
+// AF=0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8
+// AStts=0xd9145CCE52D386f254917e481eB44e9943F39138
 // a1=0x5B38Da6a701c568545dCfcB03FcB875f56beddC4
 // a2=0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2
+// 222222222222
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract poolRegistry {
@@ -23,21 +24,15 @@ contract poolRegistry {
         _;
     }
 
-    address AconomyFeeAddress;
-    address accountStatusAddress;
     AttestationServices public attestationService;
     bytes32 public lenderAttestationSchemaId;
     bytes32 public borrowerAttestationSchemaId;
     bytes32 private _attestingSchemaId;
 
     constructor(
-        AttestationServices _attestationServices,
-        address _AconomyFeeAddress,
-        address _accountStatus
+        AttestationServices _attestationServices
     ) {
         attestationService = _attestationServices;
-        AconomyFeeAddress = _AconomyFeeAddress;
-        accountStatusAddress = _accountStatus;
 
         lenderAttestationSchemaId = _attestationServices
             .getASRegistry()
@@ -138,8 +133,6 @@ contract poolRegistry {
         address poolAddress = LibPool.deployPoolAddress(
             msg.sender,
             address(this),
-            AconomyFeeAddress,
-            accountStatusAddress,
             _paymentCycleDuration,
             _paymentDefaultDuration,
             _feePercent

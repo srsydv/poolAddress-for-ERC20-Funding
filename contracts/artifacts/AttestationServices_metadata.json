@@ -1,0 +1,215 @@
+{
+	"compiler": {
+		"version": "0.8.2+commit.661d1103"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "contract IAttestationRegistry",
+						"name": "registry",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "recipient",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "attester",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "uuid",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "schema",
+						"type": "bytes32"
+					}
+				],
+				"name": "Attested",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "recipient",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "schema",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "uint256",
+						"name": "expirationTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "refUUID",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					}
+				],
+				"name": "attest",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getASRegistry",
+				"outputs": [
+					{
+						"internalType": "contract IAttestationRegistry",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "uuid",
+						"type": "bytes32"
+					}
+				],
+				"name": "isAddressActive",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "uuid",
+						"type": "bytes32"
+					}
+				],
+				"name": "isAddressValid",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"events": {
+				"Attested(address,address,bytes32,bytes32)": {
+					"notice": "Triggered when an attestation has been made. ~recipient The recipient of the attestation. ~attester The attesting account. ~uuid The UUID the revoked attestation. ~schema The UUID of the AS."
+				}
+			},
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/AttestationServices.sol": "AttestationServices"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/AttestationRegistry.sol": {
+			"keccak256": "0x2869d64ef7d3eb2cec5f6dba5585e9df44825cce081f96de0597c2b66ffb2b46",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://41acf48dc6cc63f6a60367d553b200779e79a4c5da69608234ddb579b3ab3f27",
+				"dweb:/ipfs/QmZ3ujpVbiyK9ThYWpkr5P9tgsYDzwQuS1KFeKGGgBjMpY"
+			]
+		},
+		"contracts/AttestationServices.sol": {
+			"keccak256": "0x70efdda7e4b01491eaf3b9e39353064eb7790d01bed7df6708399e4e58a2118b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://674ec175381a91cf463d0b318bad05af659a7cfaf31edb22b3f1d445a532eb4f",
+				"dweb:/ipfs/QmY69c7hDFk7V7ysgnh4qawhLiF9fhHTNVz5cLcbeWX4KC"
+			]
+		},
+		"contracts/Constants.sol": {
+			"keccak256": "0x2e4bcf4a965f840193af8729251386c1826cd050411ba4a9e85984a2551fd2ff",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://cbab8d73d76e1aa1eaead6a911d5a35f7edb18f9c67484c08bfaa96d4e3e1d68",
+				"dweb:/ipfs/QmVxRujQoBdZEote43JdaAgXkYzfqFdBbiu7rPYU3rXf2N"
+			]
+		},
+		"contracts/interfaces/IAttestationRegistry.sol": {
+			"keccak256": "0x8abaa38c6322400fd38d094c3cf91b2a885920e94d16c65ceb6652826cd060ce",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://919c900da4a23f7d17f3cd77f49e01f8166d625560441e9e7ed7f3b55a4e7b4c",
+				"dweb:/ipfs/QmbEoM4KhgZxMDrkuEjHqfWcCpdiw4AMUkoXycytcKiP8g"
+			]
+		},
+		"contracts/interfaces/IAttestationServices.sol": {
+			"keccak256": "0x93db4e6cc8cb53dda707755343588757bfe6ecda69635e05b625b7194868bcc9",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://1eea2c26b8ef8f7449a26df697698bdd4fd70f355e756152a426b57c3ddbff76",
+				"dweb:/ipfs/QmPqtb8dgibKV6hnfF7zxGwpG5TfWEjLByUCdbZ378V1TZ"
+			]
+		}
+	},
+	"version": 1
+}

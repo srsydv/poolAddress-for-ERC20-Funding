@@ -1,23 +1,19 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.2;
+pragma solidity >=0.4.22 <0.9.0;
 
-import "../poolAddress.sol";
+import "../deployPool.sol";
 
 library LibPool {
     function deployPoolAddress(
         address _poolOwner,
         address _poolRegistry,
-        address _AconomyFeeAddress,
-        address _accountStatusAddress,
         uint256 _paymentCycleDuration,
         uint256 _paymentDefaultDuration,
         uint256 _feePercent
     ) external returns (address) {
-        poolAddress tokenAddress = new poolAddress(
+        deployPool tokenAddress = new deployPool(
             _poolOwner,
             _poolRegistry,
-            _AconomyFeeAddress,
-            _accountStatusAddress,
             _paymentCycleDuration,
             _paymentDefaultDuration,
             _feePercent

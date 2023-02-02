@@ -1,0 +1,364 @@
+{
+	"deploy": {
+		"VM:-": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"main:1": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"ropsten:3": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"rinkeby:4": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"kovan:42": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"goerli:5": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"Custom": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		}
+	},
+	"data": {
+		"bytecode": {
+			"generatedSources": [],
+			"linkReferences": {},
+			"object": "",
+			"opcodes": "",
+			"sourceMap": ""
+		},
+		"deployedBytecode": {
+			"generatedSources": [],
+			"immutableReferences": {},
+			"linkReferences": {},
+			"object": "",
+			"opcodes": "",
+			"sourceMap": ""
+		},
+		"gasEstimates": null,
+		"methodIdentifiers": {
+			"borrowerLoans(address,uint256)": "e3ed1902",
+			"lenderLendAmount(address,address)": "fee870e9",
+			"lenderPoolFundDetails(address,uint256,address)": "e70a4079",
+			"loanDefaultDuration(uint256)": "8cda4571",
+			"loanExpirationTime(uint256)": "3a31f337",
+			"loanId()": "c95669a5",
+			"loans(uint256)": "e1ec3c68",
+			"poolLoans(uint256)": "376e4988",
+			"totalERC20Amount(address)": "30f2670c"
+		}
+	},
+	"abi": [
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "borrowerLoans",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				},
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"name": "lenderLendAmount",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				},
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"name": "lenderPoolFundDetails",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "amount",
+					"type": "uint256"
+				},
+				{
+					"internalType": "uint32",
+					"name": "expiration",
+					"type": "uint32"
+				},
+				{
+					"internalType": "uint32",
+					"name": "maxDuration",
+					"type": "uint32"
+				},
+				{
+					"internalType": "uint16",
+					"name": "interestRate",
+					"type": "uint16"
+				},
+				{
+					"internalType": "uint256",
+					"name": "bidId",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "loanDefaultDuration",
+			"outputs": [
+				{
+					"internalType": "uint32",
+					"name": "",
+					"type": "uint32"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "loanExpirationTime",
+			"outputs": [
+				{
+					"internalType": "uint32",
+					"name": "",
+					"type": "uint32"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [],
+			"name": "loanId",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "loans",
+			"outputs": [
+				{
+					"internalType": "address",
+					"name": "borrower",
+					"type": "address"
+				},
+				{
+					"internalType": "address",
+					"name": "receiver",
+					"type": "address"
+				},
+				{
+					"internalType": "address",
+					"name": "lender",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "poolId",
+					"type": "uint256"
+				},
+				{
+					"components": [
+						{
+							"internalType": "contract ERC20",
+							"name": "lendingToken",
+							"type": "address"
+						},
+						{
+							"internalType": "uint256",
+							"name": "principal",
+							"type": "uint256"
+						},
+						{
+							"components": [
+								{
+									"internalType": "uint256",
+									"name": "principal",
+									"type": "uint256"
+								},
+								{
+									"internalType": "uint256",
+									"name": "interest",
+									"type": "uint256"
+								}
+							],
+							"internalType": "struct poolStorage.Payment",
+							"name": "totalRepaid",
+							"type": "tuple"
+						},
+						{
+							"internalType": "uint32",
+							"name": "timestamp",
+							"type": "uint32"
+						},
+						{
+							"internalType": "uint32",
+							"name": "acceptedTimestamp",
+							"type": "uint32"
+						},
+						{
+							"internalType": "uint32",
+							"name": "lastRepaidTimestamp",
+							"type": "uint32"
+						},
+						{
+							"internalType": "uint32",
+							"name": "loanDuration",
+							"type": "uint32"
+						}
+					],
+					"internalType": "struct poolStorage.LoanDetails",
+					"name": "loanDetails",
+					"type": "tuple"
+				},
+				{
+					"components": [
+						{
+							"internalType": "uint256",
+							"name": "paymentCycleAmount",
+							"type": "uint256"
+						},
+						{
+							"internalType": "uint32",
+							"name": "paymentCycle",
+							"type": "uint32"
+						},
+						{
+							"internalType": "uint16",
+							"name": "APR",
+							"type": "uint16"
+						}
+					],
+					"internalType": "struct poolStorage.Terms",
+					"name": "terms",
+					"type": "tuple"
+				},
+				{
+					"internalType": "enum poolStorage.LoanState",
+					"name": "state",
+					"type": "uint8"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"name": "poolLoans",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "",
+					"type": "address"
+				}
+			],
+			"name": "totalERC20Amount",
+			"outputs": [
+				{
+					"internalType": "uint256",
+					"name": "",
+					"type": "uint256"
+				}
+			],
+			"stateMutability": "view",
+			"type": "function"
+		}
+	]
+}

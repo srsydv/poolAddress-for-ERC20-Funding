@@ -1,0 +1,53 @@
+{
+	"compiler": {
+		"version": "0.8.2+commit.661d1103"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/Libraries/LibPool.sol": "LibPool"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/Libraries/LibPool.sol": {
+			"keccak256": "0x3a909e8f82bceac35bff12786e18f800df020ca820c3575bbfc4d890d9c0c7a4",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f3edffb56b482bd9f2c499fb60672bc7e5dd08321ee4956b1dac73c1b6e73439",
+				"dweb:/ipfs/QmP3kMtQsMaLCvcwyb6jyGRXa7abyoNYNLp7azmtHmsoWr"
+			]
+		},
+		"contracts/deployPool.sol": {
+			"keccak256": "0xcdf917641276061ea6b3703d06e0898c34d9864454f09a53c39720d3970b7605",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://ddaf115a6032955f91a0336a290bf1563f11853f7e570a7a2b23c058ba788db6",
+				"dweb:/ipfs/QmTqrRC5e9ZAaCVyQ7yw47u9W4ejb8o5cWrqvUcEWHawau"
+			]
+		}
+	},
+	"version": 1
+}
