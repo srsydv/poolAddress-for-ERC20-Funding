@@ -1,0 +1,24 @@
+{
+  "name": "aconomy-pool-v1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "truffle-plugin-verify": "^0.6.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.1",
+    "@truffle/hdwallet-provider": "^2.1.5",
+    "big-number": "^2.0.0",
+    "moment": "^2.29.4",
+    "web3": "^1.8.2"
+  }
+}
