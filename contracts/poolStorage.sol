@@ -15,28 +15,6 @@ abstract contract poolStorage {
     //poolId => loanId => LoanState
     mapping(uint256 => uint256) public poolLoans;
 
-    struct FundDetail {
-        uint256 amount;
-        uint32 expiration;
-        uint32 maxDuration;
-        uint16 interestRate;
-        uint256 bidId;
-        BidState state;
-        uint32 bidTimestamp;
-        uint32 acceptBidTimestamp;
-    }
-
-    enum BidState {
-        PENDING,
-        CANCELLED,
-        ACCEPTED,
-        PAID
-    }
-
-    // Mapping of lender address => poolId => ERC20 token => FundDetail
-    mapping(address => mapping(uint256 => mapping(address => FundDetail)))
-        public lenderPoolFundDetails;
-
     enum LoanState {
         PENDING,
         CANCELLED,
@@ -44,26 +22,11 @@ abstract contract poolStorage {
         PAID
     }
 
-    /**
-     * Represents a total amount for a payment.
-     ~principal Amount that counts towards the principal.
-     ~interest  Amount that counts toward interest.
-     */
     struct Payment {
         uint256 principal;
         uint256 interest;
     }
 
-    /**
-     * Details about the loan.
-     ~lendingToken The token address for the loan.
-     ~principal The amount of tokens initially lent out.
-     ~totalRepaid Payment struct that represents the total principal and interest amount repaid.
-     ~timestamp Timestamp, in seconds, of when the bid was submitted by the borrower.
-     ~acceptedTimestamp Timestamp, in seconds, of when the bid was accepted by the lender.
-     ~lastRepaidTimestamp Timestamp, in seconds, of when the last payment was made
-     ~loanDuration The duration of the loan.
-     */
     struct LoanDetails {
         ERC20 lendingToken;
         uint256 principal;
@@ -74,24 +37,6 @@ abstract contract poolStorage {
         uint32 loanDuration;
     }
 
-    /**
-     *  Details about a loan request.
-     ~ borrower Account address who is requesting a loan.
-     ~ receiver Account address who will receive the loan amount.
-     ~ lender Account address who accepted and funded the loan request.
-     ~ poolId ID of the pool the bid was submitted to.
-     ~ metadataURI ID of off chain metadata to find additional information of the loan request.
-     ~ loanDetails Struct of the specific loan details.
-     ~ terms Struct of the loan request terms.
-     ~ state Represents the current state of the loan.
-     */
-
-    /**
-     *   Information on the terms of a loan request
-     ~paymentCycleAmount Value of tokens expected to be repaid every payment cycle.
-     ~paymentCycle Duration, in seconds, of how often a payment must be made.
-     ~APR Annual percentage rating to be applied on repayments. (10000 == 100%)
-     */
     struct Terms {
         uint256 paymentCycleAmount;
         uint32 paymentCycle;

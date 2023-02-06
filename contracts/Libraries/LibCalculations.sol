@@ -75,6 +75,39 @@ library LibCalculations {
                 : _loan.loanDetails.lastRepaidTimestamp;
     }
 
+    function calculateInstallmentAmount(
+        uint256 amount,
+        uint256 leftAmount,
+        uint16 interestRate,
+        uint256 paymentCycleAmount,
+        uint256 paymentCycle,
+        uint32 lastRepaidTimestamp,
+        uint256 timestamp,
+        uint256 acceptBidTimestamp,
+        uint256 maxDuration
+    )
+        internal
+        view
+        returns (
+            uint256 owedPrincipal_,
+            uint256 duePrincipal_,
+            uint256 interest_
+        )
+    {
+        return
+            calculateOwedAmount(
+                amount,
+                leftAmount,
+                interestRate,
+                paymentCycleAmount,
+                paymentCycle,
+                lastRepaidTimestamp,
+                timestamp,
+                acceptBidTimestamp,
+                maxDuration
+            );
+    }
+
     function owedAmount(poolAddress.Loan storage _loan, uint256 _timestamp)
         internal
         view
@@ -132,7 +165,9 @@ library LibCalculations {
 
         // Max payable amount in a cycle
         // NOTE: the last cycle could have less than the calculated payment amount
-        uint256 maxCycleOwed = isLastPaymentCycle ? owedPrincipal_ + interest_ : _paymentCycleAmount;
+        uint256 maxCycleOwed = isLastPaymentCycle
+            ? owedPrincipal_ + interest_
+            : _paymentCycleAmount;
 
         // Calculate accrued amount due since last repayment
         uint256 Amount = (maxCycleOwed * owedTime) / _paymentCycle;
