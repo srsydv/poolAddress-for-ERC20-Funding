@@ -193,11 +193,13 @@ contract poolAddress is poolStorage {
             amountToPool;
 
         //Transfer Aconomy Fee
-        IERC20(loan.loanDetails.lendingToken).transferFrom(
-            loan.lender,
-            AconomyFee(AconomyFeeAddress).getAconomyOwnerAddress(),
-            amountToAconomy
-        );
+        if (amountToAconomy != 0) {
+            IERC20(loan.loanDetails.lendingToken).transferFrom(
+                loan.lender,
+                AconomyFee(AconomyFeeAddress).getAconomyOwnerAddress(),
+                amountToAconomy
+            );
+        }
 
         //Transfer to Pool Owner
         if (amountToPool != 0) {
