@@ -3,11 +3,13 @@ pragma solidity >=0.4.22 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./utils/LibShare.sol";
 import "./Libraries/LibPool.sol";
+import "./Libraries/LibCollection.sol";
 
-contract piNFT is ERC721URIStorage {
+contract piNFT is ERC721URIStorage, ReentrancyGuard {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
 
@@ -20,8 +22,27 @@ contract piNFT is ERC721URIStorage {
     // tokenId => royalties
     mapping(uint256 => LibShare.Share[]) public royaltiesByTokenId;
 
+    mapping(uint256 => LibShare.Share[]) public royaltiesForValidator;
+
+    // collectionId => royalties
+    mapping(uint256 => LibShare.Share[]) public royaltiesForCollection;
+
     // tokenId => (token contract => token contract index)
     mapping(uint256 => mapping(address => uint256)) erc20ContractIndex;
+
+    struct CollectionMeta {
+        string name;
+        string symbol;
+        string URI;
+        address contractAddress;
+        address owner;
+        string description;
+    }
+
+    // collectionId => collwctionMeta
+    mapping(uint256 => CollectionMeta) collections;
+
+    uint256 public collectionId;
 
     event ReceivedERC20(
         address indexed _from,
@@ -36,6 +57,21 @@ contract piNFT is ERC721URIStorage {
         uint256 _value
     );
     event RoyaltiesSetForTokenId(
+        uint256 indexed tokenId,
+        LibShare.Share[] indexed royalties
+    );
+
+    event SetCollectionURI(uint256 collectionId, string uri);
+
+    event SetName(uint256 collectionId, string name);
+
+    event SetDescription(uint256 collectionId, string Description);
+
+    event SetSymble(uint256 collectionId, string Symble);
+
+    event CollectionCreated(uint256 collectionId, address CollectionAddress);
+
+    event Royalties(
         uint256 indexed tokenId,
         LibShare.Share[] indexed royalties
     );
@@ -95,18 +131,30 @@ contract piNFT is ERC721URIStorage {
         return royaltiesByTokenId[_tokenId];
     }
 
+    function getValidatorRoyalties(uint256 _tokenId)
+        external
+        view
+        returns (LibShare.Share[] memory)
+    {
+        return royaltiesForValidator[_tokenId];
+    }
+
     // this function requires approval of tokens by _erc20Contract
     // adds ERC20 tokens to the token with _tokenId(basically trasnfer ERC20 to this contract)
     function addERC20(
-        address _from,
         uint256 _tokenId,
         address _erc20Contract,
-        uint256 _value
+        uint256 _value,
+        LibShare.Share[] memory royalties
     ) public {
-        require(_from == msg.sender, "not allowed to add ERC20");
-        erc20Received(_from, _tokenId, _erc20Contract, _value);
+        erc20Received(msg.sender, _tokenId, _erc20Contract, _value);
+        setRoyaltiesForValidator(_tokenId, royalties);
         require(
-            IERC20(_erc20Contract).transferFrom(_from, address(this), _value),
+            IERC20(_erc20Contract).transferFrom(
+                msg.sender,
+                address(this),
+                _value
+            ),
             "ERC20 transfer failed."
         );
     }
@@ -136,13 +184,35 @@ contract piNFT is ERC721URIStorage {
         emit ReceivedERC20(_from, _tokenId, _erc20Contract, _value);
     }
 
+    //Set Royalties for Validator
+    function setRoyaltiesForValidator(
+        uint256 _tokenId,
+        LibShare.Share[] memory royalties
+    ) internal {
+        require(royalties.length <= 10, "Atmost 10 royalties can be added");
+        delete royaltiesForValidator[_tokenId];
+        uint256 sumRoyalties = 0;
+        for (uint256 i = 0; i < royalties.length; i++) {
+            require(
+                royalties[i].account != address(0x0),
+                "Royalty recipient should be present"
+            );
+            require(royalties[i].value != 0, "Royalty value should be > 0");
+            royaltiesForValidator[_tokenId].push(royalties[i]);
+            sumRoyalties += royalties[i].value;
+        }
+        require(sumRoyalties < 10000, "Sum of Royalties > 100%");
+
+        emit Royalties(_tokenId, royalties);
+    }
+
     function redeemPiNFT(
         uint256 _tokenId,
         address _nftReciever,
         address _validatorAddress,
         address _erc20Contract,
         uint256 _value
-    ) external onlyOwnerOfToken(_tokenId) {
+    ) external onlyOwnerOfToken(_tokenId) nonReentrant {
         require(_nftReciever != address(0), "cannot transfer to zero address");
         _transferERC20(_tokenId, _validatorAddress, _erc20Contract, _value);
         ERC721.safeTransferFrom(msg.sender, _nftReciever, _tokenId);
@@ -154,7 +224,7 @@ contract piNFT is ERC721URIStorage {
         address _erc20Reciever,
         address _erc20Contract,
         uint256 _value
-    ) external onlyOwnerOfToken(_tokenId) {
+    ) external onlyOwnerOfToken(_tokenId) nonReentrant {
         require(_nftReciever != address(0), "cannot transfer to zero address");
         _transferERC20(_tokenId, _erc20Reciever, _erc20Contract, _value);
         ERC721.safeTransferFrom(msg.sender, _nftReciever, _tokenId);

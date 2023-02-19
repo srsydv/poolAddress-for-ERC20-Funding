@@ -22,19 +22,17 @@ contract AttestationRegistry is IAttestationRegistry {
         returns (bytes32)
     {
         uint256 index = ++_asCount;
-
-        ASRecord memory asRecord = ASRecord({
-            uuid: EMPTY_UUID,
-            index: index,
-            schema: schema
-        });
-
-        bytes32 uuid = _getUUID(asRecord);
+        bytes32 uuid = _getUUID(schema);
         if (_registry[uuid].uuid != EMPTY_UUID) {
             revert("AlreadyExists");
         }
 
-        asRecord.uuid = uuid;
+        ASRecord memory asRecord = ASRecord({
+            uuid: uuid,
+            index: index,
+            schema: schema
+        });
+
         _registry[uuid] = asRecord;
 
         emit Registered(uuid, index, schema, msg.sender);
@@ -42,8 +40,8 @@ contract AttestationRegistry is IAttestationRegistry {
         return uuid;
     }
 
-    function _getUUID(ASRecord memory asRecord) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(asRecord.schema));
+    function _getUUID(bytes calldata schema) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(schema));
     }
 
     function getAS(bytes32 uuid)
@@ -55,6 +53,3 @@ contract AttestationRegistry is IAttestationRegistry {
         return _registry[uuid];
     }
 }
-
-// 1 = 0xbd590158631F4B5f38B5FbC2336DBe94A2787B9c
-// 0xf8e81D47203A594245E36C48e151709F0C19fBe8

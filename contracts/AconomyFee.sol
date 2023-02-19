@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AconomyFee is Ownable {
     uint16 public _AconomyFee;
-    address public AconomyOwnerAddress;
 
     event SetAconomyFee(uint16 newFee, uint16 oldFee);
 
@@ -14,13 +13,12 @@ contract AconomyFee is Ownable {
     }
 
     function getAconomyOwnerAddress() public view virtual returns (address) {
-        return AconomyOwnerAddress;
+        return owner();
     }
 
     // Set Aconomy Fee in percent
     function setProtocolFee(uint16 newFee) public virtual onlyOwner {
-        AconomyOwnerAddress = msg.sender;
-        // Skip if the fee is the same
+        
         if (newFee == _AconomyFee) return;
 
         uint16 oldFee = _AconomyFee;

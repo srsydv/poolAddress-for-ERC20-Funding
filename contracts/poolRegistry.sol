@@ -5,17 +5,11 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./AconomyFee.sol";
 import "./Libraries/LibPool.sol";
 import "./AttestationServices.sol";
-// 0x406AB5033423Dcb6391Ac9eEEad73294FA82Cfbc   0xDA0bab807633f07f013f94DD0E6A4F96F8742B53
-// poolAddress": "0xEC3c9230499a3FA960Ee28f7D2c0Ee3AD4AeBb07" 0xc1F3Af1a7Aa87B338d19e56CDc8aF0BFC02d05D0
-// AS=0x1c91347f2A44538ce62453BEBd9Aa907C662b4bD
-// AF=0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8
-// AStts=0xd9145CCE52D386f254917e481eB44e9943F39138
-// a1=0x5B38Da6a701c568545dCfcB03FcB875f56beddC4
-// a2=0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2
-// 222222222222
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract poolRegistry {
+contract poolRegistry is ReentrancyGuard {
     using Counters for Counters.Counter;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -28,11 +22,11 @@ contract poolRegistry {
     bytes32 public lenderAttestationSchemaId;
     bytes32 public borrowerAttestationSchemaId;
     bytes32 private _attestingSchemaId;
+    address public AconomyFeeAddress;
 
-    constructor(
-        AttestationServices _attestationServices
-    ) {
+    constructor(AttestationServices _attestationServices, address AconomyFee) {
         attestationService = _attestationServices;
+        AconomyFeeAddress = AconomyFee;
 
         lenderAttestationSchemaId = _attestationServices
             .getASRegistry()
@@ -59,14 +53,15 @@ contract poolRegistry {
     struct poolDetail {
         address poolAddress;
         address owner;
-        string metadataURI;
+        string URI;
+        uint16 APR;
         uint16 poolFeePercent; // 10000 is 100%
         bool lenderAttestationRequired;
         EnumerableSet.AddressSet verifiedLendersForPool;
         mapping(address => bytes32) lenderAttestationIds;
-        uint32 paymentCycleDuration; //unix time
-        uint32 paymentDefaultDuration; //unix time
-        uint32 loanExpirationTime; //unix time
+        uint32 paymentCycleDuration;
+        uint32 paymentDefaultDuration;
+        uint32 loanExpirationTime;
         bool borrowerAttestationRequired;
         EnumerableSet.AddressSet verifiedBorrowersForPool;
         mapping(address => bytes32) borrowerAttestationIds;
@@ -83,49 +78,27 @@ contract poolRegistry {
         address poolAddress,
         uint256 poolId
     );
-    event SetPoolURI(uint256 poolId, string uri);
     event SetPaymentCycleDuration(uint256 poolId, uint32 duration);
     event SetPaymentDefaultDuration(uint256 poolId, uint32 duration);
     event SetPoolFee(uint256 poolId, uint16 feePct);
     event SetloanExpirationTime(uint256 poolId, uint32 duration);
     event LenderAttestation(uint256 poolId, address lender);
     event BorrowerAttestation(uint256 poolId, address borrower);
+    event SetPoolURI(uint256 marketId, string uri);
+    event SetAPR(uint256 marketId, uint16 APR);
+    event poolClosed(uint256 poolId);
 
     //Create Pool
     function createPool(
-        address _initialOwner,
         uint32 _paymentCycleDuration,
         uint32 _paymentDefaultDuration,
         uint32 _loanExpirationTime,
         uint16 _poolFeePercent,
+        uint16 _apr,
+        string calldata _uri,
         bool _requireLenderAttestation,
-        bool _requireBorrowerAttestation,
-        string calldata _uri
-    ) external {
-        _createPool(
-            _initialOwner,
-            _paymentCycleDuration,
-            _paymentDefaultDuration,
-            _loanExpirationTime,
-            _poolFeePercent,
-            _requireLenderAttestation,
-            _requireBorrowerAttestation,
-            _uri
-        );
-    }
-
-    // Creates a new Pool.
-    function _createPool(
-        address _initialOwner,
-        uint32 _paymentCycleDuration,
-        uint32 _paymentDefaultDuration,
-        uint32 _loanExpirationTime,
-        uint16 _feePercent,
-        bool _requireLenderAttestation,
-        bool _requireBorrowerAttestation,
-        string calldata _uri
-    ) internal returns (uint256 poolId_) {
-        require(_initialOwner != address(0), "Invalid owner address");
+        bool _requireBorrowerAttestation
+    ) external returns (uint256 poolId_) {
         // Increment pool ID counter
         poolId_ = ++poolCount;
 
@@ -135,17 +108,18 @@ contract poolRegistry {
             address(this),
             _paymentCycleDuration,
             _paymentDefaultDuration,
-            _feePercent
+            _poolFeePercent
         );
         pools[poolId_].poolAddress = poolAddress;
         // Set the pool owner
-        pools[poolId_].owner = _initialOwner;
+        pools[poolId_].owner = msg.sender;
 
-        setPoolURI(poolId_, _uri);
+        setApr(poolId_, _apr);
         setPaymentCycleDuration(poolId_, _paymentCycleDuration);
         setPaymentDefaultDuration(poolId_, _paymentDefaultDuration);
-        setPoolFeePercent(poolId_, _feePercent);
+        setPoolFeePercent(poolId_, _poolFeePercent);
         setloanExpirationTime(poolId_, _loanExpirationTime);
+        setPoolURI(poolId_, _uri);
 
         // Check if pool requires lender attestation to join
         if (_requireLenderAttestation) {
@@ -156,21 +130,14 @@ contract poolRegistry {
             pools[poolId_].borrowerAttestationRequired = true;
         }
 
-        emit poolCreated(_initialOwner, poolAddress, poolId_);
+        emit poolCreated(msg.sender, poolAddress, poolId_);
     }
 
-    function setPoolURI(uint256 _poolId, string calldata _uri)
-        public
-        ownsPool(_poolId)
-    {
-        //We do string comparison by checking the hashes of the strings against one another
-        if (
-            keccak256(abi.encodePacked(_uri)) !=
-            keccak256(abi.encodePacked(pools[_poolId].metadataURI))
-        ) {
-            pools[_poolId].metadataURI = _uri;
+    function setApr(uint256 _poolId, uint16 _apr) public ownsPool(_poolId) {
+        if (_apr != pools[_poolId].APR) {
+            pools[_poolId].APR = _apr;
 
-            emit SetPoolURI(_poolId, _uri);
+            emit SetAPR(_poolId, _apr);
         }
     }
 
@@ -182,6 +149,20 @@ contract poolRegistry {
             pools[_poolId].paymentCycleDuration = _duration;
 
             emit SetPaymentCycleDuration(_poolId, _duration);
+        }
+    }
+
+    function setPoolURI(uint256 _poolId, string calldata _uri)
+        public
+        ownsPool(_poolId)
+    {
+        if (
+            keccak256(abi.encodePacked(_uri)) !=
+            keccak256(abi.encodePacked(pools[_poolId].URI))
+        ) {
+            pools[_poolId].URI = _uri;
+
+            emit SetPoolURI(_poolId, _uri);
         }
     }
 
@@ -200,7 +181,7 @@ contract poolRegistry {
         public
         ownsPool(_poolId)
     {
-        require(_newPercent >= 0 && _newPercent <= 10000, "invalid percent");
+        require(_newPercent <= 10000, "invalid percent");
         if (_newPercent != pools[_poolId].poolFeePercent) {
             pools[_poolId].poolFeePercent = _newPercent;
             emit SetPoolFee(_poolId, _newPercent);
@@ -222,7 +203,7 @@ contract poolRegistry {
         uint256 _poolId,
         address _lenderAddress,
         uint256 _expirationTime
-    ) external {
+    ) external ownsPool(_poolId) {
         _attestAddress(_poolId, _lenderAddress, _expirationTime, true);
     }
 
@@ -230,7 +211,7 @@ contract poolRegistry {
         uint256 _poolId,
         address _borrowerAddress,
         uint256 _expirationTime
-    ) external {
+    ) external ownsPool(_poolId) {
         _attestAddress(_poolId, _borrowerAddress, _expirationTime, false);
     }
 
@@ -241,6 +222,7 @@ contract poolRegistry {
         bool _isLender
     )
         internal
+        nonReentrant
         lenderOrBorrowerSchema(
             _isLender ? lenderAttestationSchemaId : borrowerAttestationSchemaId
         )
@@ -269,14 +251,21 @@ contract poolRegistry {
             // Store the lender attestation ID for the pool ID
             pools[_poolId].lenderAttestationIds[_Address] = _uuid;
             // Add lender address to pool set
-            pools[_poolId].verifiedLendersForPool.add(_Address);
+            //    (bool isSuccess ) =  pools[_poolId].verifiedLendersForPool.add(_Address);
+            require(
+                pools[_poolId].verifiedLendersForPool.add(_Address),
+                "add lender to poolfailed"
+            );
 
             emit LenderAttestation(_poolId, _Address);
         } else {
             // Store the lender attestation ID for the pool ID
             pools[_poolId].borrowerAttestationIds[_Address] = _uuid;
             // Add lender address to pool set
-            pools[_poolId].verifiedBorrowersForPool.add(_Address);
+            require(
+                pools[_poolId].verifiedBorrowersForPool.add(_Address),
+                "add borrower failed, verifiedBorrowersForPool.add failed"
+            );
 
             emit BorrowerAttestation(_poolId, _Address);
         }
@@ -332,6 +321,14 @@ contract poolRegistry {
         }
     }
 
+    function closePool(uint256 _poolId) public ownsPool(_poolId) {
+        if (!ClosedPools[_poolId]) {
+            ClosedPools[_poolId] = true;
+
+            emit poolClosed(_poolId);
+        }
+    }
+
     function ClosedPool(uint256 _poolId) public view returns (bool) {
         return ClosedPools[_poolId];
     }
@@ -366,5 +363,17 @@ contract poolRegistry {
 
     function getPoolOwner(uint256 _poolId) public view returns (address) {
         return pools[_poolId].owner;
+    }
+
+    function getPoolApr(uint256 _poolId) public view returns (uint16) {
+        return pools[_poolId].APR;
+    }
+
+    function getAconomyFee() public view returns (uint16) {
+        return AconomyFee(AconomyFeeAddress).protocolFee();
+    }
+
+    function getAconomyOwner() public view returns (address) {
+        return AconomyFee(AconomyFeeAddress).getAconomyOwnerAddress();
     }
 }

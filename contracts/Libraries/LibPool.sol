@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "../deployPool.sol";
+import "../FundingPool.sol";
 
 library LibPool {
     function deployPoolAddress(
@@ -11,7 +11,7 @@ library LibPool {
         uint256 _paymentDefaultDuration,
         uint256 _feePercent
     ) external returns (address) {
-        deployPool tokenAddress = new deployPool(
+        FundingPool tokenAddress = new FundingPool(
             _poolOwner,
             _poolRegistry,
             _paymentCycleDuration,

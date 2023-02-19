@@ -34,13 +34,11 @@ contract AttestationServices {
         uint256 expirationTime;
         // The time when the attestation was revoked (Unix timestamp).
         uint256 revocationTime;
-        // The UUID of the related attestation.
-        bytes32 refUUID;
         // Custom attestation data.
         bytes data;
     }
 
-    bytes32 private _lastUUID;
+    
     // The global counter for the total number of attestations.
     uint256 private _attestationsCount;
 
@@ -71,7 +69,7 @@ contract AttestationServices {
         uint256 expirationTime,
         bytes32 refUUID,
         bytes calldata data
-    ) public payable virtual returns (bytes32) {
+    ) public virtual returns (bytes32) {
         return
             _attest(
                 recipient,
@@ -110,10 +108,10 @@ contract AttestationServices {
             time: block.timestamp,
             expirationTime: expirationTime,
             revocationTime: 0,
-            refUUID: refUUID,
             data: data
         });
 
+        bytes32 _lastUUID;
         _lastUUID = _getUUID(attestation);
         attestation.uuid = _lastUUID;
 

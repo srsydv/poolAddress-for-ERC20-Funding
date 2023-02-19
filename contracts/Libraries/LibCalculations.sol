@@ -8,7 +8,6 @@ import "./WadRayMath.sol";
 import "../poolAddress.sol";
 
 library LibCalculations {
-    // contract LibCalculations {
     using WadRayMath for uint256;
 
     uint256 internal constant WAD = 1e18;
