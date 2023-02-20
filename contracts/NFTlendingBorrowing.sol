@@ -80,7 +80,7 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
         uint256 _expectedAmount
     )
         external
-        // onlyOwnerOfToken(_contractAddress, _tokenId)
+        onlyOwnerOfToken(_contractAddress, _tokenId)
         nonReentrant
         returns (uint256 _NFTid)
     {
