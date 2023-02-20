@@ -26,6 +26,3 @@ contract AconomyFee is Ownable {
         emit SetAconomyFee(newFee, oldFee);
     }
 }
-
-// 0xb45596fCDdf2323A3c50333AF74B7e1077838D88
-// 0xd9145CCE52D386f254917e481eB44e9943F39138
