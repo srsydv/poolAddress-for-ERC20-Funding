@@ -24,9 +24,9 @@ contract poolRegistry is ReentrancyGuard {
     bytes32 private _attestingSchemaId;
     address public AconomyFeeAddress;
 
-    constructor(AttestationServices _attestationServices, address AconomyFee) {
+    constructor(AttestationServices _attestationServices, address _AconomyFee) {
         attestationService = _attestationServices;
-        AconomyFeeAddress = AconomyFee;
+        AconomyFeeAddress = _AconomyFee;
 
         lenderAttestationSchemaId = _attestationServices
             .getASRegistry()
@@ -40,14 +40,6 @@ contract poolRegistry is ReentrancyGuard {
         _attestingSchemaId = schemaId;
         _;
         _attestingSchemaId = bytes32(0);
-    }
-
-    function guess(string memory _word, bytes32 ans)
-        public
-        view
-        returns (bool)
-    {
-        return keccak256(abi.encodePacked(_word)) == ans;
     }
 
     struct poolDetail {
@@ -105,10 +97,7 @@ contract poolRegistry is ReentrancyGuard {
         //Deploy Pool Address
         address poolAddress = LibPool.deployPoolAddress(
             msg.sender,
-            address(this),
-            _paymentCycleDuration,
-            _paymentDefaultDuration,
-            _poolFeePercent
+            address(this)
         );
         pools[poolId_].poolAddress = poolAddress;
         // Set the pool owner
@@ -234,7 +223,6 @@ contract poolRegistry is ReentrancyGuard {
             _Address,
             _attestingSchemaId, // set by the modifier
             _expirationTime,
-            0,
             abi.encode(_poolId, _Address)
         );
 
@@ -275,7 +263,7 @@ contract poolRegistry is ReentrancyGuard {
         return pools[_poolId].poolFeePercent;
     }
 
-    function borrowerVarification(uint256 _poolId, address _borrowerAddress)
+    function borrowerVerification(uint256 _poolId, address _borrowerAddress)
         public
         view
         returns (bool isVerified_, bytes32 uuid_)
@@ -289,7 +277,7 @@ contract poolRegistry is ReentrancyGuard {
             );
     }
 
-    function lenderVarification(uint256 _poolId, address _lenderAddress)
+    function lenderVerification(uint256 _poolId, address _lenderAddress)
         public
         view
         returns (bool isVerified_, bytes32 uuid_)

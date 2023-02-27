@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "./Constants.sol";
 import "./interfaces/IAttestationServices.sol";
 import "./interfaces/IAttestationRegistry.sol";
 
 contract AttestationRegistry is IAttestationRegistry {
     mapping(bytes32 => ASRecord) public _registry;
+    bytes32 private constant EMPTY_UUID = 0;
     event Registered(
         bytes32 indexed uuid,
         uint256 indexed index,

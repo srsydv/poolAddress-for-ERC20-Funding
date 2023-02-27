@@ -13,7 +13,7 @@ import "./utils/LibShare.sol";
 contract CollectionMethods is ERC721URIStorage, ReentrancyGuard {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
-    address poolOwner;
+    address collectionOwner;
     address piNFTAddress;
 
     // tokenId => collection royalties
@@ -27,6 +27,12 @@ contract CollectionMethods is ERC721URIStorage, ReentrancyGuard {
 
     // tokenId => (token contract => token contract index)
     mapping(uint256 => mapping(address => uint256)) erc20ContractIndex;
+
+    // TokenId => Owner Address
+    mapping(uint256 => address) NFTowner;
+
+    // TokenId => Amount
+    mapping(uint256 => uint256) withdrawnAmount;
 
     event ReceivedERC20(
         address indexed _from,
@@ -47,12 +53,12 @@ contract CollectionMethods is ERC721URIStorage, ReentrancyGuard {
     );
 
     constructor(
-        address _poolOwner,
+        address _collectionOwner,
         address _piNFTAddress,
         string memory _name,
         string memory _symbol
     ) ERC721(_name, _symbol) {
-        poolOwner = _poolOwner;
+        collectionOwner = _collectionOwner;
         piNFTAddress = _piNFTAddress;
     }
 
@@ -66,6 +72,8 @@ contract CollectionMethods is ERC721URIStorage, ReentrancyGuard {
 
     // mints an ERC721 token to _to with _uri as token uri
     function mintNFT(address _to, string memory _uri) public returns (uint256) {
+        require(msg.sender == collectionOwner, "You are not the collection Owner");
+        require(_to != address(0), "You can't mint with 0 address");
         uint256 tokenId_ = _tokenIdCounter.current();
         _safeMint(_to, tokenId_);
         _setTokenURI(tokenId_, _uri);
@@ -81,6 +89,10 @@ contract CollectionMethods is ERC721URIStorage, ReentrancyGuard {
         uint256 _value,
         LibShare.Share[] memory royalties
     ) public {
+        require(
+            _erc20Contract != address(0),
+            "you can't do this with zero address"
+        );
         erc20Added(msg.sender, _tokenId, _erc20Contract, _value);
         setRoyaltiesForValidator(_tokenId, royalties);
         require(
@@ -148,6 +160,10 @@ contract CollectionMethods is ERC721URIStorage, ReentrancyGuard {
         uint256 _value
     ) external onlyOwnerOfToken(_tokenId) nonReentrant {
         require(_nftReciever != address(0), "cannot transfer to zero address");
+        require(
+            _erc20Contract != address(0),
+            "you can't do this with zero address"
+        );
         _transferERC20(_tokenId, _validatorAddress, _erc20Contract, _value);
         ERC721.safeTransferFrom(msg.sender, _nftReciever, _tokenId);
     }
@@ -160,6 +176,10 @@ contract CollectionMethods is ERC721URIStorage, ReentrancyGuard {
         uint256 _value
     ) external onlyOwnerOfToken(_tokenId) nonReentrant {
         require(_nftReciever != address(0), "cannot transfer to zero address");
+        require(
+            _erc20Contract != address(0),
+            "you can't do this with zero address"
+        );
         _transferERC20(_tokenId, _erc20Reciever, _erc20Contract, _value);
         ERC721.safeTransferFrom(msg.sender, _nftReciever, _tokenId);
     }
@@ -172,8 +192,6 @@ contract CollectionMethods is ERC721URIStorage, ReentrancyGuard {
         uint256 _value
     ) private {
         require(_to != address(0), "cannot send to zero address");
-        address rootOwner = ERC721.ownerOf(_tokenId);
-        require(rootOwner == msg.sender, "only owner can transfer");
         removeERC20(_tokenId, _erc20Contract, _value);
         require(
             IERC20(_erc20Contract).transfer(_to, _value),
@@ -228,5 +246,36 @@ contract CollectionMethods is ERC721URIStorage, ReentrancyGuard {
         returns (LibShare.Share[] memory)
     {
         return cRoyaltiesForValidator[_tokenId];
+    }
+
+    function viewWithdrawnAmount(uint256 _tokenId)
+        public
+        view
+        returns (uint256)
+    {
+        return withdrawnAmount[_tokenId];
+    }
+
+    function Repay(
+        uint256 _tokenId,
+        address _erc20Contract,
+        uint256 _amount
+    ) external nonReentrant {
+        require(NFTowner[_tokenId] == msg.sender, "You can't withdraw");
+
+        // Send payment to the Pool
+        require(
+            IERC20(_erc20Contract).transferFrom(
+                msg.sender,
+                address(this),
+                _amount
+            ),
+            "Unable to tansfer to poolAddress"
+        );
+        withdrawnAmount[_tokenId] -= _amount;
+
+        if (withdrawnAmount[_tokenId] <= 0) {
+            ERC721.safeTransferFrom(address(this), msg.sender, _tokenId);
+        }
     }
 }

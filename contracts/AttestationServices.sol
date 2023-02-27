@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "./Constants.sol";
 import "./AttestationRegistry.sol";
 import "./interfaces/IAttestationServices.sol";
 import "./interfaces/IAttestationRegistry.sol";
@@ -38,9 +37,10 @@ contract AttestationServices {
         bytes data;
     }
 
-    
     // The global counter for the total number of attestations.
     uint256 private _attestationsCount;
+
+    bytes32 private constant EMPTY_UUID = 0;
 
     // The global mapping between attestations and their UUIDs.
     mapping(bytes32 => Attestation) private _db;
@@ -67,25 +67,15 @@ contract AttestationServices {
         address recipient,
         bytes32 schema,
         uint256 expirationTime,
-        bytes32 refUUID,
         bytes calldata data
     ) public virtual returns (bytes32) {
-        return
-            _attest(
-                recipient,
-                schema,
-                expirationTime,
-                refUUID,
-                data,
-                msg.sender
-            );
+        return _attest(recipient, schema, expirationTime, data, msg.sender);
     }
 
     function _attest(
         address recipient,
         bytes32 schema,
         uint256 expirationTime,
-        bytes32 refUUID,
         bytes calldata data,
         address attester
     ) private returns (bytes32) {
@@ -153,6 +143,3 @@ contract AttestationServices {
         return _db[uuid].uuid != 0;
     }
 }
-
-// 2= 0x64AC4bFDcB0304928be139710F653042AdF4534e
-// 0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B

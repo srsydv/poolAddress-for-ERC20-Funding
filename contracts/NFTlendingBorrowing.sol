@@ -13,7 +13,6 @@ import "./Libraries/LibCalculations.sol";
 
 contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
     using Counters for Counters.Counter;
-    Counters.Counter public bidId;
     uint256 public NFTid;
     address AconomyFeeAddress;
     struct NFTdetail {
@@ -26,6 +25,7 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
         uint16 percent;
         bool listed;
         bool bidAccepted;
+        bool repaid;
     }
 
     struct BidDetail {
@@ -43,16 +43,24 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
     // NFTid => NFTdetail
     mapping(uint256 => NFTdetail) public NFTdetails;
 
-    // NFTid => Bid
+    // NFTid => Bid[]
     mapping(uint256 => BidDetail[]) public Bids;
 
     // Events
-    event AppliedBid(BidDetail data, uint256 NFTid);
+    event AppliedBid(uint256 BidId, BidDetail data, uint256 NFTid);
     event SetPercent(uint256 NFTid, uint16 Percent);
     event SetDuration(uint256 NFTid, uint32 Duration);
     event SetExpiration(uint256 NFTid, uint256 Expiration);
     event SetExpectedAmount(uint256 NFTid, uint256 expectedAmount);
     event NFTlisted(uint256 NFTid, uint256 TokenId, address ContractAddress);
+    event repaid(uint256 NFTid, uint256 BidId, uint256 Amount);
+    event withdrawn(uint256 NFTid, uint256 BidId, uint256 Amount);
+    event AcceptedBid(
+        uint256 NFTid,
+        uint256 BidId,
+        uint256 Amount,
+        uint256 ProtocolAmount
+    );
 
     constructor(address _aconomyFee) {
         AconomyFeeAddress = _aconomyFee;
@@ -66,12 +74,13 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
         _;
     }
 
-    modifier NFTlender(uint256 _NFTid) {
+    modifier NFTOwner(uint256 _NFTid) {
         require(NFTdetails[_NFTid].tokenIdOwner == msg.sender, "Not the owner");
         _;
     }
 
-    function listForLending(
+    // list Your NFT for Borrowing by NFT owner
+    function listNFTforBorrowing(
         uint256 _tokenId,
         address _contractAddress,
         uint16 _percent,
@@ -84,24 +93,34 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
         nonReentrant
         returns (uint256 _NFTid)
     {
-        _NFTid = ++NFTid;
-        NFTdetails[_NFTid].tokenIdOwner = msg.sender;
-        NFTdetails[_NFTid].NFTtokenId = _tokenId;
-        NFTdetails[_NFTid].contractAddress = _contractAddress;
-        NFTdetails[_NFTid].listed = true;
-        NFTdetails[_NFTid].bidAccepted = false;
+        require(
+            _contractAddress != address(0),
+            "you can't do this with zero address"
+        );
 
-        setPercent(_NFTid, _percent);
-        setDurationTime(_NFTid, _duration);
-        setExpirationTime(_NFTid, _expiration);
-        setExpectedAmount(_NFTid, _expectedAmount);
+        _NFTid = ++NFTid;
+
+        NFTdetail memory details = NFTdetail(
+            _tokenId,
+            msg.sender,
+            _contractAddress,
+            _duration,
+            _expiration,
+            _expectedAmount,
+            _percent,
+            true,
+            false,
+            false
+        );
+
+        NFTdetails[_NFTid] = details;
 
         emit NFTlisted(_NFTid, _tokenId, _contractAddress);
     }
 
     function setPercent(uint256 _NFTid, uint16 _percent)
         public
-        NFTlender(_NFTid)
+        NFTOwner(_NFTid)
     {
         if (_percent != NFTdetails[_NFTid].percent) {
             NFTdetails[_NFTid].percent = _percent;
@@ -112,7 +131,7 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
 
     function setDurationTime(uint256 _NFTid, uint32 _duration)
         public
-        NFTlender(_NFTid)
+        NFTOwner(_NFTid)
     {
         if (_duration != NFTdetails[_NFTid].duration) {
             NFTdetails[_NFTid].duration = _duration;
@@ -123,7 +142,7 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
 
     function setExpirationTime(uint256 _NFTid, uint256 _expiration)
         public
-        NFTlender(_NFTid)
+        NFTOwner(_NFTid)
     {
         uint256 expirationTime = block.timestamp + _expiration;
         if (expirationTime != NFTdetails[_NFTid].expiration) {
@@ -135,7 +154,7 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
 
     function setExpectedAmount(uint256 _NFTid, uint256 _expectedAmount)
         public
-        NFTlender(_NFTid)
+        NFTOwner(_NFTid)
     {
         if (_expectedAmount != NFTdetails[_NFTid].expectedAmount) {
             NFTdetails[_NFTid].expectedAmount = _expectedAmount;
@@ -144,6 +163,7 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
         }
     }
 
+    // Bid on a NFT by users
     function Bid(
         uint256 _NFTid,
         uint256 _bidAmount,
@@ -152,6 +172,13 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
         uint32 _duration,
         uint256 _expiration
     ) external nonReentrant {
+        require(
+            _ERC20Address != address(0),
+            "you can't do this with zero address"
+        );
+        require(_bidAmount != 0, "You can't bid with zero Amount");
+        require(!NFTdetails[_NFTid].bidAccepted, "Bid Already Accepted");
+        require(NFTdetails[_NFTid].listed, "You can't Bid on this NFT");
         BidDetail memory bidDetail = BidDetail(
             Bids[_NFTid].length,
             _percent,
@@ -172,35 +199,33 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
             "Unable to tansfer Your ERC20"
         );
         Bids[_NFTid].push(bidDetail);
-        emit AppliedBid(bidDetail, _NFTid);
+        emit AppliedBid(Bids[_NFTid].length - 1, bidDetail, _NFTid);
     }
 
+    // Accept Bid by NFT owner
     function AcceptBid(uint256 _NFTid, uint256 _bidId) external nonReentrant {
-        BidDetail memory bids = Bids[_NFTid][_bidId];
-        NFTdetail memory NFT = NFTdetails[_NFTid];
-        require(
-            msg.sender == ERC721(NFT.contractAddress).ownerOf(NFT.NFTtokenId),
-            "Only token owner can Accept this Bid"
-        );
-        require(!bids.withdrawn, "Already withdrawn");
-        require(NFT.listed, "It's not listed for Lending");
+        require(!Bids[_NFTid][_bidId].withdrawn, "Already withdrawn");
+        require(NFTdetails[_NFTid].listed, "It's not listed for Borrowing");
+        require(!Bids[_NFTid][_bidId].bidAccepted, "Bid Already Accepted");
+        require(NFTdetails[_NFTid].tokenIdOwner == msg.sender, "You can't Accept This Bid");
 
-        NFT.bidAccepted = true;
+        NFTdetails[_NFTid].bidAccepted = true;
+        Bids[_NFTid][_bidId].bidAccepted = true;
 
         address AconomyOwner = AconomyFee(AconomyFeeAddress)
             .getAconomyOwnerAddress();
 
-        //Aconomy Fee
+        //Calculating Aconomy Fee
         uint256 amountToAconomy = LibCalculations.percent(
-            bids.Amount,
+            Bids[_NFTid][_bidId].Amount,
             AconomyFee(AconomyFeeAddress).protocolFee()
         );
 
-        // transfering Amount to Owner
+        // transfering Amount to NFT Owner
         require(
-            IERC20(bids.ERC20Address).transfer(
+            IERC20(Bids[_NFTid][_bidId].ERC20Address).transfer(
                 msg.sender,
-                bids.Amount - amountToAconomy
+                Bids[_NFTid][_bidId].Amount - amountToAconomy
             ),
             "unable to transfer to receiver"
         );
@@ -208,7 +233,7 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
         // transfering Amount to Protocol Owner
         if (amountToAconomy != 0) {
             require(
-                IERC20(bids.ERC20Address).transfer(
+                IERC20(Bids[_NFTid][_bidId].ERC20Address).transfer(
                     AconomyOwner,
                     amountToAconomy
                 ),
@@ -218,33 +243,75 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
 
         //needs approval on frontend
         // transferring NFT to this address
-        ERC721(NFT.contractAddress).safeTransferFrom(
+        ERC721(NFTdetails[_NFTid].contractAddress).safeTransferFrom(
             msg.sender,
             address(this),
-            NFT.NFTtokenId
+            NFTdetails[_NFTid].NFTtokenId
+        );
+
+        emit AcceptedBid(
+            _NFTid,
+            _bidId,
+            Bids[_NFTid][_bidId].Amount - amountToAconomy,
+            amountToAconomy
         );
     }
 
+    // Repay Amount including percentage to Bidder
     function Repay(uint256 _NFTid, uint256 _bidId) external nonReentrant {
-        NFTdetail memory NFT = NFTdetails[_NFTid];
-        BidDetail memory bids = Bids[_NFTid][_bidId];
-        require(NFT.bidAccepted, "Bid Not Accepted yet");
-        require(NFT.listed, "It's not listed for Lending");
+        require(NFTdetails[_NFTid].bidAccepted, "Bid Not Accepted yet");
+        require(NFTdetails[_NFTid].listed, "It's not listed for Borrowing");
+        require(!NFTdetails[_NFTid].repaid, "Already Repaid");
 
-        // Repay percentage Amount
+        // Calculate percentage Amount
         uint256 percentageAmount = LibCalculations.percent(
-            bids.Amount,
-            bids.percent
+            Bids[_NFTid][_bidId].Amount,
+            Bids[_NFTid][_bidId].percent
         );
 
-        // transfering Amount to Owner
+        // transfering Amount to Bidder
         require(
-            IERC20(bids.ERC20Address).transferFrom(
+            IERC20(Bids[_NFTid][_bidId].ERC20Address).transferFrom(
                 msg.sender,
-                bids.bidderAddress,
-                bids.Amount + percentageAmount
+                Bids[_NFTid][_bidId].bidderAddress,
+                Bids[_NFTid][_bidId].Amount + percentageAmount
             ),
             "unable to transfer to bidder Address"
         );
+
+        NFTdetails[_NFTid].repaid = true;
+
+        // transferring NFT to this address
+        ERC721(NFTdetails[_NFTid].contractAddress).safeTransferFrom(
+            address(this),
+            msg.sender,
+            NFTdetails[_NFTid].NFTtokenId
+        );
+        emit repaid(_NFTid, _bidId, Bids[_NFTid][_bidId].Amount + percentageAmount);
+    }
+
+    function withdraw(uint256 _NFTid, uint256 _bidId) external nonReentrant {
+        require(!Bids[_NFTid][_bidId].bidAccepted, "Your Bid has been Accepted");
+        require(Bids[_NFTid][_bidId].bidderAddress == msg.sender, "You can't withdraw this Bid");
+        require(
+            block.timestamp > Bids[_NFTid][_bidId].expiration,
+            "You can't withdraw this Bid"
+        );
+        require(
+            IERC20(Bids[_NFTid][_bidId].ERC20Address).transfer(msg.sender, Bids[_NFTid][_bidId].Amount),
+            "unable to transfer to Bidder Address"
+        );
+    }
+
+    function removeNFTfromList(uint256 _NFTid) external {
+        require(
+            msg.sender == ERC721(NFTdetails[_NFTid].contractAddress).ownerOf(NFTdetails[_NFTid].NFTtokenId),
+            "Only token owner can execute"
+        );
+        if (!NFTdetails[_NFTid].listed) {
+            revert("It's aiready removed");
+        }
+
+        NFTdetails[_NFTid].listed = false;
     }
 }

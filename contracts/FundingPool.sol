@@ -12,29 +12,10 @@ import "./poolRegistry.sol";
 contract FundingPool is ReentrancyGuard {
     address poolOwner;
     address poolRegistryAddress;
-    uint256 paymentCycleDuration;
-    uint256 paymentDefaultDuration;
-    uint256 feePercent;
 
-    constructor(
-        address _poolOwner,
-        address _poolRegistry,
-        uint256 _paymentCycleDuration,
-        uint256 _paymentDefaultDuration,
-        uint256 _feePercent
-    ) {
+    constructor(address _poolOwner, address _poolRegistry) {
         poolOwner = _poolOwner;
         poolRegistryAddress = _poolRegistry;
-        paymentCycleDuration = _paymentCycleDuration;
-        paymentDefaultDuration = _paymentDefaultDuration;
-        feePercent = _feePercent;
-    }
-
-    modifier onlyPoolOwner(uint256 poolId) {
-        require(
-            msg.sender == poolRegistry(poolRegistryAddress).getPoolOwner(poolId)
-        );
-        _;
     }
 
     uint256 public bidId = 0;
@@ -114,9 +95,16 @@ contract FundingPool is ReentrancyGuard {
         uint256 _expiration
     ) external nonReentrant {
         (bool isVerified, ) = poolRegistry(poolRegistryAddress)
-            .lenderVarification(_poolId, msg.sender);
+            .lenderVerification(_poolId, msg.sender);
 
         require(isVerified, "Not verified lender");
+
+        require(
+            _ERC20Address != address(0),
+            "you can't do this with zero address"
+        );
+
+        require(_amount != 0, "You can't supply with zero amount");
 
         address lender = msg.sender;
         require(_expiration > uint32(block.timestamp), "wrong timestamp");
@@ -152,7 +140,8 @@ contract FundingPool is ReentrancyGuard {
         uint256 _bidId,
         address _lender,
         address _receiver
-    ) external onlyPoolOwner(_poolId) nonReentrant {
+    ) external nonReentrant {
+        require(poolOwner == msg.sender, "You are not the Pool Owner");
         FundDetail storage fundDetail = lenderPoolFundDetails[_lender][_poolId][
             _ERC20Address
         ][_bidId];
@@ -162,9 +151,6 @@ contract FundingPool is ReentrancyGuard {
         fundDetail.acceptBidTimestamp = uint32(block.timestamp);
         uint256 amount = fundDetail.amount;
         fundDetail.state = BidState.ACCEPTED;
-        address _poolAddress = poolRegistry(poolRegistryAddress).getPoolAddress(
-            _poolId
-        );
         uint32 paymentCycle = poolRegistry(poolRegistryAddress)
             .getPaymentCycleDuration(_poolId);
 
@@ -212,7 +198,8 @@ contract FundingPool is ReentrancyGuard {
         address _ERC20Address,
         uint256 _bidId,
         address _lender
-    ) external onlyPoolOwner(_poolId) {
+    ) external nonReentrant {
+        require(poolOwner == msg.sender, "You are not the Pool Owner");
         FundDetail storage fundDetail = lenderPoolFundDetails[_lender][_poolId][
             _ERC20Address
         ][_bidId];
@@ -266,11 +253,8 @@ contract FundingPool is ReentrancyGuard {
         uint32 paymentCycle = poolRegistry(poolRegistryAddress)
             .getPaymentCycleDuration(_poolId);
 
-        (
-            uint256 owedAmount,
-            uint256 dueAmount,
-            uint256 interest
-        ) = LibCalculations.calculateInstallmentAmount(
+        (, uint256 dueAmount, uint256 interest) = LibCalculations
+            .calculateInstallmentAmount(
                 fundDetail.amount,
                 fundDetail.Repaid.amount,
                 fundDetail.interestRate,
@@ -300,11 +284,8 @@ contract FundingPool is ReentrancyGuard {
         uint32 paymentCycle = poolRegistry(poolRegistryAddress)
             .getPaymentCycleDuration(_poolId);
 
-        (
-            uint256 owedAmount,
-            uint256 dueAmount,
-            uint256 interest
-        ) = LibCalculations.calculateInstallmentAmount(
+        (uint256 owedAmount, , uint256 interest) = LibCalculations
+            .calculateInstallmentAmount(
                 fundDetail.amount,
                 fundDetail.Repaid.amount,
                 fundDetail.interestRate,
@@ -324,7 +305,8 @@ contract FundingPool is ReentrancyGuard {
         address _ERC20Address,
         uint256 _bidId,
         address _lender
-    ) external onlyPoolOwner(_poolId) {
+    ) external nonReentrant {
+        require(poolOwner == msg.sender, "You are not the Pool Owner");
         FundDetail storage fundDetail = lenderPoolFundDetails[_lender][_poolId][
             _ERC20Address
         ][_bidId];
@@ -368,7 +350,7 @@ contract FundingPool is ReentrancyGuard {
         uint256 _amount,
         uint256 _interest,
         uint256 _owedAmount
-    ) internal nonReentrant {
+    ) internal {
         FundDetail storage fundDetail = lenderPoolFundDetails[_lender][_poolId][
             _ERC20Address
         ][_bidId];
@@ -408,6 +390,10 @@ contract FundingPool is ReentrancyGuard {
         FundDetail storage fundDetail = lenderPoolFundDetails[_lender][_poolId][
             _ERC20Address
         ][_bidId];
+
+        if (fundDetail.state != BidState.PENDING) {
+            revert("Bid must be pending");
+        }
 
         // Check is lender the calling the function
         if (_lender != msg.sender) {

@@ -11,7 +11,7 @@ const poolAddress = artifacts.require("poolAddress")
 
 contract("poolRegistry", async (accounts) => {
 
-    const paymentCycleDuration = moment.duration(30, 'days').asSeconds()
+const paymentCycleDuration = moment.duration(30, 'days').asSeconds()
 const loanDefaultDuration = moment.duration(180, 'days').asSeconds()
 const loanExpirationDuration = moment.duration(1, 'days').asSeconds()
 
@@ -25,6 +25,8 @@ let aconomyFee, poolRegis, attestRegistry, attestServices, res, poolId1, pool1Ad
         aconomyFee = await AconomyFee.deployed();
        await aconomyFee.setProtocolFee(200);
         let protocolFee = await aconomyFee.protocolFee()
+        let aconomyFeeOwner = await aconomyFee.getAconomyOwnerAddress()
+        assert.equal(aconomyFeeOwner, accounts[0], "wrong Aconomy fee owner")
         assert.equal(protocolFee.toNumber(), 200, "Wrong set Protocol Fee")
     })
 
@@ -40,17 +42,19 @@ let aconomyFee, poolRegis, attestRegistry, attestServices, res, poolId1, pool1Ad
         // console.log("attestTegistry: ", attestServices.address)
         poolRegis = await PoolRegistry.deployed()
        res =  await poolRegis.createPool(
-            accounts[0],
             paymentCycleDuration,
             loanDefaultDuration,
             loanExpirationDuration,
             10,
+            10,
+            "sk.com",
             true,
-            true,
-            "sk.com"
+            true
         );
-        poolId1 = res.logs[0].args.poolId.toNumber()
-        pool1Address = res.logs[5].args.poolAddress;
+        poolId1 = res.logs[6].args.poolId.toNumber()
+        console.log(poolId1, "poolId1")
+        pool1Address = res.logs[4].args.poolAddress;
+        console.log(pool1Address, "poolAdress")
 
         // res =  await poolRegis.createPool(
         //     accounts[0],
@@ -70,18 +74,18 @@ let aconomyFee, poolRegis, attestRegistry, attestServices, res, poolId1, pool1Ad
 
 
     it("should add Lender to the pool", async() => {
-        res = await poolRegis.lenderVarification(poolId1, accounts[0])
+        res = await poolRegis.lenderVerification(poolId1, accounts[0])
         assert.equal(res.isVerified_, false, "AddLender function not called but verified")
        await poolRegis.addLender(poolId1, accounts[0], expirationTime, {from: accounts[0]} )
-        res = await poolRegis.lenderVarification(poolId1, accounts[0])
-        assert.equal(res.isVerified_, true, "Lender Not added to pool, lenderVarification failed")
+        res = await poolRegis.lenderVerification(poolId1, accounts[0])
+        assert.equal(res.isVerified_, true, "Lender Not added to pool, lenderVerification failed")
     })
 
     it("should add Borrower to the pool", async() => {
         
          await poolRegis.addBorrower(poolId1, accounts[1], expirationTime, {from: accounts[0]} )
-         res = await poolRegis.borrowerVarification(poolId1, accounts[1])
-        assert.equal(res.isVerified_, true, "Borrower Not added to pool, borrowerVarification failed")
+         res = await poolRegis.borrowerVerification(poolId1, accounts[1])
+        assert.equal(res.isVerified_, true, "Borrower Not added to pool, borrowerVerification failed")
     })
 
     it("should allow Attested Borrower to Request Loan in a Pool", async() => {
@@ -101,7 +105,7 @@ let aconomyFee, poolRegis, attestRegistry, attestServices, res, poolId1, pool1Ad
         accounts[1],
         {from: accounts[1]}
        )
-// console.log(res.logs[0].args)
+    // console.log(res.logs[0].args)
        loanId1 = res.logs[0].args.loanId.toNumber()
      let paymentCycleAmount = res.logs[0].args.paymentCycleAmount.toNumber()
 
@@ -137,11 +141,29 @@ console.log(_balance1.toNumber())
 
     it("should repay Loan ", async() => {
         // await erc20.transfer(accounts[1], 12000, {from: accounts[0]})
-        await erc20.approve(poolAddressInstance.address, 200, {from:accounts[1]})
+        await erc20.approve(poolAddressInstance.address, 500, {from:accounts[1]})
         res = await poolAddressInstance.repayYourLoan(loanId1, {from: accounts[1]})
         // console.log(res)
         assert.equal(res.receipt.status, true, "Not able to repay loan")
     })
+
+//     it("should repay some amount of lone ", async() => {
+//          // Approve loan amount and transfer it to the borrower
+//   await erc20.approve(poolAddressInstance.address, 500, { from: accounts[1] });
+//   await poolAddressInstance.borrow(500, { from: accounts[2] });
+  
+//   // Check loan status before repayment
+//   let loanBefore = await poolAddressInstance.loans(loanId1);
+//   assert.equal(loanBefore.status, "active", "Loan status should be active before repayment");
+  
+//   // Repay full loan amount
+//   await erc20.approve(poolAddressInstance.address, loanAmount, { from: borrower });
+//   await poolAddressInstance.repayYourLoan(loanId1, { from: borrower });
+  
+//   // Check loan status after repayment
+//   let loanAfter = await poolAddressInstance.loans(loanId1);
+//   assert.equal(loanAfter.status, "repaid", "Loan status should be repaid after full repayment");
+//     })
 
 
 })

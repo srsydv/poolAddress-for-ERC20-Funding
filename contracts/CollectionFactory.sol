@@ -33,7 +33,7 @@ contract CollectionFactory {
 
     event SetDescription(uint256 collectionId, string Description);
 
-    event SetSymble(uint256 collectionId, string Symble);
+    event SetSymbol(uint256 collectionId, string Symbol);
 
     event CollectionCreated(uint256 collectionId, address CollectionAddress);
 
@@ -56,20 +56,10 @@ contract CollectionFactory {
     function createCollection(
         string memory _name,
         string memory _symbol,
-        string calldata _URI,
-        string memory _description,
-        LibShare.Share[] memory royalties
-    ) public {
-        _createCollection(_name, _symbol, _URI, _description, royalties);
-    }
-
-    function _createCollection(
-        string memory _name,
-        string memory _symbol,
         string calldata _uri,
         string memory _description,
         LibShare.Share[] memory royalties
-    ) internal returns (uint256 collectionId_) {
+    ) public returns (uint256 collectionId_) {
         collectionId_ = ++collectionId;
 
         //Deploy collection Address
@@ -80,14 +70,17 @@ contract CollectionFactory {
             _symbol
         );
 
-        collections[collectionId_].contractAddress = collectionAddress;
-        collections[collectionId_].owner = msg.sender;
+        CollectionMeta memory details = CollectionMeta(
+            _name,
+            _symbol,
+            _uri,
+            collectionAddress,
+            msg.sender,
+            _description
+        );
 
+        collections[collectionId_] = details;
         setRoyaltiesForCollection(collectionId_, royalties);
-        setCollectionName(collectionId_, _name);
-        setCollectionSymble(collectionId_, _symbol);
-        setCollectionURI(collectionId_, _uri);
-        setCollectionDescription(collectionId_, _description);
 
         emit CollectionCreated(collectionId_, collectionAddress);
     }
@@ -142,7 +135,7 @@ contract CollectionFactory {
         }
     }
 
-    function setCollectionSymble(uint256 _collectionId, string memory _symbol)
+    function setCollectionSymbol(uint256 _collectionId, string memory _symbol)
         public
         collectionOwner(_collectionId)
     {
@@ -152,7 +145,7 @@ contract CollectionFactory {
         ) {
             collections[_collectionId].symbol = _symbol;
 
-            emit SetSymble(_collectionId, _symbol);
+            emit SetSymbol(_collectionId, _symbol);
         }
     }
 

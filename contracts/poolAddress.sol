@@ -11,7 +11,6 @@ import "./poolRegistry.sol";
 import "./poolStorage.sol";
 import "./AconomyFee.sol";
 import "./Libraries/LibCalculations.sol";
-import "./interfaces/IaccountStatus.sol";
 
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -74,8 +73,16 @@ contract poolAddress is poolStorage, ReentrancyGuard {
         uint16 _APR,
         address _receiver
     ) public returns (uint256 loanId_) {
+        require(
+            _lendingToken != address(0),
+            "you can't do this with zero address"
+        );
+        require(
+            _receiver != address(0),
+            "you can't set zero address as receiver"
+        );
         (bool isVerified, ) = poolRegistry(poolRegistryAddress)
-            .borrowerVarification(_poolId, msg.sender);
+            .borrowerVerification(_poolId, msg.sender);
         require(isVerified, "Not verified borrower");
         require(
             !poolRegistry(poolRegistryAddress).ClosedPool(_poolId),
@@ -143,7 +150,7 @@ contract poolAddress is poolStorage, ReentrancyGuard {
         Loan storage loan = loans[_loanId];
 
         (bool isVerified, ) = poolRegistry(poolRegistryAddress)
-            .lenderVarification(loan.poolId, msg.sender);
+            .lenderVerification(loan.poolId, msg.sender);
 
         require(isVerified, "Not verified lender");
         require(
@@ -289,7 +296,7 @@ contract poolAddress is poolStorage, ReentrancyGuard {
         }
     }
 
-    function repayYourLoan(uint256 _loanId) external {
+    function repayYourLoan(uint256 _loanId) external nonReentrant {
         if (loans[_loanId].state != LoanState.ACCEPTED) {
             revert("Loan must be accepted");
         }
@@ -314,11 +321,10 @@ contract poolAddress is poolStorage, ReentrancyGuard {
         if (loans[_loanId].state != LoanState.ACCEPTED) {
             revert("Loan must be accepted");
         }
-        (
-            uint256 owedAmount,
-            uint256 dueAmount,
-            uint256 interest
-        ) = LibCalculations.owedAmount(loans[_loanId], block.timestamp);
+        (, uint256 dueAmount, uint256 interest) = LibCalculations.owedAmount(
+            loans[_loanId],
+            block.timestamp
+        );
 
         uint256 paymentAmount = dueAmount + interest;
         return paymentAmount;
@@ -332,17 +338,16 @@ contract poolAddress is poolStorage, ReentrancyGuard {
         if (loans[_loanId].state != LoanState.ACCEPTED) {
             revert("Loan must be accepted");
         }
-        (
-            uint256 owedAmount,
-            uint256 dueAmount,
-            uint256 interest
-        ) = LibCalculations.owedAmount(loans[_loanId], block.timestamp);
+        (uint256 owedAmount, , uint256 interest) = LibCalculations.owedAmount(
+            loans[_loanId],
+            block.timestamp
+        );
 
         uint256 paymentAmount = owedAmount + interest;
         return paymentAmount;
     }
 
-    function repayFullLoan(uint256 _loanId) external {
+    function repayFullLoan(uint256 _loanId) external nonReentrant {
         if (loans[_loanId].state != LoanState.ACCEPTED) {
             revert("Loan must be accepted");
         }
@@ -359,13 +364,9 @@ contract poolAddress is poolStorage, ReentrancyGuard {
         uint256 _loanId,
         Payment memory _payment,
         uint256 _owedAmount
-    ) internal nonReentrant {
+    ) internal {
         Loan storage loan = loans[_loanId];
         uint256 paymentAmount = _payment.principal + _payment.interest;
-        uint256 poolId_ = loan.poolId;
-        address poolAddress_ = poolRegistry(poolRegistryAddress).getPoolAddress(
-            poolId_
-        );
 
         // Check if we are sending a payment or amount remaining
         if (paymentAmount >= _owedAmount) {

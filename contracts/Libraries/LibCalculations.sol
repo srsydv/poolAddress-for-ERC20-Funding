@@ -80,13 +80,13 @@ library LibCalculations {
         uint16 interestRate,
         uint256 paymentCycleAmount,
         uint256 paymentCycle,
-        uint32 lastRepaidTimestamp,
+        uint32 _lastRepaidTimestamp,
         uint256 timestamp,
         uint256 acceptBidTimestamp,
         uint256 maxDuration
     )
         internal
-        view
+        pure
         returns (
             uint256 owedPrincipal_,
             uint256 duePrincipal_,
@@ -100,7 +100,7 @@ library LibCalculations {
                 interestRate,
                 paymentCycleAmount,
                 paymentCycle,
-                lastRepaidTimestamp,
+                _lastRepaidTimestamp,
                 timestamp,
                 acceptBidTimestamp,
                 maxDuration
