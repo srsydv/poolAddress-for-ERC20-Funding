@@ -248,7 +248,7 @@ contract FundingPool is ReentrancyGuard {
             _ERC20Address
         ][_bidId];
         if (fundDetail.state != BidState.ACCEPTED) {
-            revert("Bid must be pending");
+            revert("Bid must be accepted");
         }
         uint32 paymentCycle = poolRegistry(poolRegistryAddress)
             .getPaymentCycleDuration(_poolId);

@@ -183,7 +183,7 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
             Bids[_NFTid].length,
             _percent,
             _duration,
-            _expiration,
+            _expiration + block.timestamp,
             msg.sender,
             _ERC20Address,
             _bidAmount,
@@ -295,7 +295,7 @@ contract NFTlendingBorrowing is ERC721Holder, ReentrancyGuard {
         require(Bids[_NFTid][_bidId].bidderAddress == msg.sender, "You can't withdraw this Bid");
         require(
             block.timestamp > Bids[_NFTid][_bidId].expiration,
-            "You can't withdraw this Bid"
+            "Can't withdraw Bid before expiration"
         );
         require(
             IERC20(Bids[_NFTid][_bidId].ERC20Address).transfer(msg.sender, Bids[_NFTid][_bidId].Amount),
